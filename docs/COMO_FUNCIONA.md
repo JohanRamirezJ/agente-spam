@@ -50,16 +50,9 @@ Los textos se arman mezclando frases por categoría con marcas, montos, enlaces 
 
 Spam aquí = intenta robar información o dinero. Para que el modelo no confunda eso con publicidad, `legit_modern.py` añade 1.400 ejemplos legítimos (promociones de tiendas, códigos de verificación, avisos de Nequi/bancos, LinkedIn, boletines, en español e inglés).
 
-### Resultado medido (textos escritos aparte, nunca usados para entrenar)
+### Resultado medido
 
-| prueba | antes | ahora |
-|---|---|---|
-| 28 correos reales de una bandeja, todos legítimos: marcados spam | 12 | 0 (4 en "revisar") |
-| 30 legítimos de prueba: marcados spam | 5 | 1 (3 en "revisar") |
-| 30 estafas en español perdidas (clasificadas "ok") | 7 | 9 |
-| F1 inglés (3.562 correos) | 0,9865 | 0,9835 |
-
-Lo que **no funcionó**: se probó añadir 7 señales de intención (pide clave, pide pago, "cuenta bloqueada", urgencia…) como características extra. El F1 en español bajó de 0,824 a 0,800 y se descartaron. Con pocos ejemplos, un modelo lineal no las aprovecha.
+Ver la tabla del [README](../README.md). Resumen: ~1 de cada 8 estafas pasa como "ok"; ~1 de cada 6 legítimos cae en "revisar"; casi ninguno llega a `spam`. Lo que no funcionó (señales de intención, ajuste de hiperparámetros, segunda ronda de datos sintéticos) y la fuga de datos corregida están descritos allí. Con muestras de 25-30 mensajes, diferencias de 1 o 2 aciertos son ruido.
 
 ### Tres veredictos en lugar de dos
 Como los puntajes de estafas formales y de promociones se solapan, el API devuelve `verdict`: `spam` (≥ 0,8), `revisar` (0,5-0,8) u `ok`. Los umbrales se cambian con `SPAM_SURE_THRESHOLD` y `SPAM_THRESHOLD`. En las pruebas, ningún correo legítimo de tu bandeja llegó a `spam`.

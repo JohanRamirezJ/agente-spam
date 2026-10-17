@@ -20,16 +20,24 @@ Por fuente: Enron F1 0.985 · SMS F1 0.954.
 
 Los datos de Enron llaman "spam" a casi toda la publicidad, lo que no coincide con la definición del proyecto. Se añadieron ejemplos **sintéticos** (`spanish_seed.py`, `spanish_modern.py`, `legit_modern.py`): estafas actuales (phishing Nequi/Bancolombia, paquetería, DIAN/SAT, streaming, cripto/IA, empleo falso, WhatsApp) y correo legítimo (promociones, códigos 2FA, recibos fintech, notificaciones de LinkedIn, boletines). Detalle en [docs/COMO_FUNCIONA.md](docs/COMO_FUNCIONA.md).
 
-Medido con textos escritos aparte y nunca usados para entrenar (muestras pequeñas: orientativo):
+Medido con textos escritos aparte y nunca usados para entrenar (muestras pequeñas: orientativo). Resultado del modelo actual, en spam / revisar / ok:
 
-| prueba | antes | ahora |
-|---|---|---|
-| 28 correos reales de una bandeja personal, todos legítimos, marcados spam | 12 | **0** (4 en "revisar") |
-| 30 correos legítimos de prueba (promos, códigos, recibos) marcados spam | 5 | 1 (3 en "revisar") |
-| 30 estafas en español: detectadas como spam / revisar / perdidas | 23 detectadas, 7 perdidas | 8 spam, 13 revisar, **9 perdidas** |
-| F1 inglés (3.562 correos) | 0,9865 | 0,9835 |
+| prueba | spam | revisar | ok |
+|---|---|---|---|
+| Test final: 25 estafas reales-estilo (ES+EN, con faltas, mayúsculas, firmas) | 6 | 16 | **3 perdidas** |
+| Test final: 25 correos legítimos | 0 | 4 | 21 |
+| Desarrollo: 30 estafas en español | 3 | 22 | 5 perdidas |
+| Desarrollo: 30 legítimos en español | 0 | 0 | 30 |
+| Desarrollo: 30 promos/códigos/recibos legítimos | 1 | 3 | 26 |
+| 28 correos de una bandeja personal (todos legítimos) | 0 | 7 | 21 |
+| Inglés, 3.562 correos de Enron | F1 0,9825 | | |
 
-Es un intercambio: se redujeron mucho los falsos positivos a costa de perder más estafas en español. Con estos datos sintéticos los puntajes de estafas formales y promociones se solapan; la mejora real requiere tus correos etiquetados.
+**Cómo leerlo:** ~1 de cada 8 estafas pasa como "ok", y ~1 de cada 6 correos legítimos cae en "revisar" (casi siempre promociones). Casi ningún legítimo se marca como `spam` con seguridad. Por eso la regla es **etiquetar, nunca borrar**.
+
+**Qué se intentó y no sirvió:** señales de intención como características extra (empeoró), 16 combinaciones de hiperparámetros (7-10 errores en 90 mensajes: ruido), y una segunda ronda de datos sintéticos (empate: mejoró estafas en español, empeoró la bandeja personal).
+**Una fuga de datos que se detectó y corrigió:** en la ronda 2, frases del test se habían copiado en las plantillas de entrenamiento y daban un F1 de ~1,0 engañoso. Se eliminaron y hay una prueba automática que lo impide (`test_no_eval_text_appears_in_training_data`).
+
+**Techo actual:** el modelo cuenta palabras y fragmentos; no entiende la intención. Para pasar de aquí hacen falta (a) correos reales etiquetados o (b) embeddings multilingües preentrenados, que no se pudieron descargar desde este entorno (Hugging Face bloqueado).
 
 ## Limitaciones
 - Enron es de 1999-2005: el spam moderno (phishing actual, imágenes, HTML) se detecta peor. La app mitiga esto con el feedback.

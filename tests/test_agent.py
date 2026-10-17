@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from spam_agent import legit_modern, spanish_modern, spanish_seed
+from spam_agent import eval_final, legit_modern, modern_extra, spanish_modern, spanish_seed
 from spam_agent.model import SpamAgent
 
 ROOT = __import__("pathlib").Path(__file__).resolve().parent.parent
@@ -86,9 +86,22 @@ def test_spanish_modern_heldout(agent):
     assert (ham_scores >= 0.5).mean() < 0.15  # false positives on legitimate Spanish mail
 
 
-def test_spanish_train_and_eval_do_not_overlap():
-    train, _ = spanish_modern.train_examples()
-    assert not set(train) & set(spanish_modern.EVAL_SPAM + spanish_modern.EVAL_HAM)
+def test_no_eval_text_appears_in_training_data():
+    """Guards against the leak found in round 2, where eval sentences were copied into training templates."""
+    train = set()
+    for m in (spanish_seed, spanish_modern, legit_modern, modern_extra):
+        train |= set(m.train_examples()[0])
+    evals = (spanish_modern.EVAL_SPAM + spanish_modern.EVAL_HAM + legit_modern.EVAL_LEGIT
+             + eval_final.SPAM + eval_final.LEGIT + spanish_seed.TEST_SPAM + spanish_seed.TEST_HAM)
+    assert not train & set(evals)
+
+
+def test_final_set_floor(agent):
+    """Messy, hand-written set written after the training data was frozen. Measured: 3/25 scams missed,
+    4/25 legit sent to 'revisar', 0 legit confidently 'spam'. Floors are loose on purpose (n is small)."""
+    s, l = agent.score(eval_final.SPAM), agent.score(eval_final.LEGIT)
+    assert (s < 0.5).sum() <= 6
+    assert (l >= 0.8).sum() <= 1
 
 
 def test_legit_marketing_and_codes_mostly_not_flagged(agent):

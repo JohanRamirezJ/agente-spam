@@ -49,6 +49,10 @@ Medido con textos escritos aparte y nunca usados para entrenar (muestras pequeñ
 
 `/prototipo` es el prototipo HTML original conectado al modelo real (explicación por palabra, métricas en vivo, corrección). La revisión del original, con sus defectos medidos, está en [docs/REVISION_PROTOTIPO.md](docs/REVISION_PROTOTIPO.md).
 
+## Metodología y diseño estadístico
+
+Objetivos, hipótesis, diseño (hold-out 80/10/10, IC 95 % por bootstrap y Wilson, prueba de McNemar exacta) y sus limitaciones: [docs/METODOLOGIA.md](docs/METODOLOGIA.md). Las cifras se generan con `python scripts/compute_stats.py` (guarda `models/stats.json`).
+
 ## Póster
 
 `poster/poster.pdf` (3:4, 1 página) se genera con `scripts/build_poster.py`: todas las cifras salen del modelo entrenado, ninguna se escribe a mano (salvo el conteo de promociones de una bandeja personal, que no es reproducible). Para regenerarlo con tus nombres y el logo: `pip install playwright`, guarda el logo como `poster/logo.png` y ejecuta `python scripts/build_poster.py --integrantes "Ana Pérez, Luis Gómez"`.

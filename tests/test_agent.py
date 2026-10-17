@@ -151,3 +151,25 @@ def test_prototype_page_is_served_and_handles_odd_words(client):
     assert client.get("/prototipo").status_code == 200
     # the original JS prototype produced NaN for this word; the API must not care
     assert 0 <= client.post("/predict", json={"text": "constructor"}).json()["spam_probability"] <= 1
+
+
+def test_rule_baseline_reproduces_the_first_prototype():
+    """The statistical comparison needs the original 15-word rules to behave exactly like the original HTML."""
+    from spam_agent.baseline_rules import rule_score
+    assert abs(rule_score("Tu paquete está retenido en aduana, paga la tarifa de $14.500 en este enlace o será devuelto") - 0.024) < 0.001
+    assert rule_score("Estimado cliente, su cuenta bancaria ha sido bloqueada temporalmente por seguridad. Para restablecer su acceso "
+                      "urgentemente, haga clic aquí e ingrese su contraseña actual.") > 0.99
+    assert 0 <= rule_score("constructor") <= 1  # the original produced NaN here
+
+
+def test_stats_file_is_consistent():
+    import json
+    st = json.loads((ROOT / "models" / "stats.json").read_text())
+    for k, v in st["test"].items():
+        if isinstance(v, dict):
+            assert v["ci95"][0] <= v["value"] <= v["ci95"][1], k
+    m = st["mcnemar"]["final_50"]
+    assert m["n"] == len(eval_final.SPAM) + len(eval_final.LEGIT)
+    assert m["only_model"] > m["only_rules"] and m["p_value"] < 0.05
+    f = st["final_set"]["scams_flagged"]
+    assert f["wilson95"][0] <= f["p"] <= f["wilson95"][1]

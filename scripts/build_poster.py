@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from spam_agent import eval_final
 from spam_agent.explain import explain
+from spam_agent.baseline_rules import rule_score
 from spam_agent.model import SpamAgent
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -29,23 +30,6 @@ PAYPAL = "Your PayPal account is suspended. Confirm your password within 24 hour
 
 def pct(x, d=1):
     return f"{x * 100:.{d}f}".replace(".", ",") + " %"
-
-
-def original_prototype_score(text):
-    """The first prototype's logic (15 hard-coded words), re-implemented to quote its real output."""
-    kw = {"urgente": 2.6, "bloqueada": 2.3, "cuenta": 1.2, "haga": 1.7, "clic": 2.9, "aquí": 2.1, "datos": 1.8, "contraseña": 3.2,
-          "inmediatamente": 2.5, "premio": 2.8, "ganado": 2.4, "tarjeta": 3.0, "crédito": 2.5, "dinero": 1.9, "restablecer": 2.0}
-    stop = {"el", "la", "los", "las", "un", "una", "de", "del", "a", "en", "y", "o", "que", "por", "para", "con", "su", "sus", "se", "es"}
-    import re
-    toks = [t for t in re.sub(r"[.,/#!$%^&*;:{}=\-_`~()?¿¡]", "", text.lower()).split() if len(t) > 1 and t not in stop]
-    z, found = -1.2, False
-    for w in set(toks):
-        if w in kw:
-            found = True
-            z += toks.count(w) * kw[w]
-    if not found:
-        z -= 2.5
-    return 1 / (1 + math.exp(-z))
 
 
 def tiers(agent, texts):
@@ -70,10 +54,20 @@ def main():
     banco = explain(agent, BANCO, top=15)
     banco_top = [c for c in banco["contributions"] if c["delta"] > 0][:4]
     p_paq, p_pay = float(agent.score([PAQUETE])[0]), float(agent.score([PAYPAL])[0])
-    o_paq, o_pay = original_prototype_score(PAQUETE), original_prototype_score(PAYPAL)
+    o_paq, o_pay = rule_score(PAQUETE), rule_score(PAYPAL)
     fs, fr, fo = tiers(agent, eval_final.SPAM)
     ls, lr, lo = tiers(agent, eval_final.LEGIT)
     n_scam, n_leg = len(eval_final.SPAM), len(eval_final.LEGIT)
+    st = json.loads((ROOT / "models" / "stats.json").read_text())  # python scripts/compute_stats.py
+
+    def ci(k, d=2):
+        lo, hi = st["test"][k]["ci95"]
+        return f"[{lo * 100:.{d}f}; {hi * 100:.{d}f}]".replace(".", ",")
+
+    mc = st["mcnemar"]["final_50"]
+    pv = mc["p_value"]
+    mc_p = "0,0001" if pv < 0.0005 else f"{pv:.3f}".replace(".", ",")
+    w_lo, w_hi = st["final_set"]["scams_flagged"]["wilson95"]
 
     def comma(x):
         return f"{x:.2f}".replace(".", ",")
@@ -92,6 +86,10 @@ def main():
         banco_prob=pct(float(banco["probability"])), banco_prob_w=f"{banco['probability'] * 100:.0f}%", words=words,
         p_paq=pct(p_paq), p_pay=pct(p_pay), o_paq=pct(o_paq), o_pay=pct(o_pay),
         n_scam=n_scam, n_leg=n_leg, fs=fs, fr=fr, fo=fo, ls=ls, lr=lr, lo=lo,
+        ci_p=ci("precision"), ci_r=ci("recall"), ci_f1=ci("f1"), ci_fpr=ci("fpr"),
+        mc_n=mc["n"], mc_model=f'{mc["model_correct"]}/{mc["n"]}', mc_rules=f'{mc["rules_correct"]}/{mc["n"]}',
+        mc_model_pct=pct(mc["model_correct"] / mc["n"], 0), mc_rules_pct=pct(mc["rules_correct"] / mc["n"], 0), mc_p=mc_p,
+        esc_pct=pct(fo / n_scam, 0), esc_ci=f"{(1 - w_hi) * 100:.0f}–{(1 - w_lo) * 100:.0f} %",
         promos_flag="19",
         escape_note="aproximadamente 1 de cada 8" if fo / n_scam < 0.17 else f"{fo} de cada {n_scam}",
     )

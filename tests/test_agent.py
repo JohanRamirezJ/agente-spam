@@ -134,3 +134,20 @@ def test_retrain_refuses_a_model_that_loses_scam_recall(client):
     assert "scam_recall_after" in rep
     if rep["promoted"]:
         assert rep["scam_recall_after"] >= rep["scam_recall_before"] - 0.03
+
+
+def test_explain_and_metrics_endpoints(client):
+    r = client.post("/explain", json={"text": SPAM}).json()
+    assert r["verdict"] == "spam" and r["contributions"]
+    assert any(c["delta"] > 0 for c in r["contributions"])
+    assert client.post("/explain", json={"text": "!!! 123"}).json()["contributions"] == []
+    m = client.get("/metrics").json()
+    assert m["enron_test"]["metrics"]["f1"] > 0.97
+    names = {s["name"]: s for s in m["hand_written_sets"]}
+    assert all(s["spam"] + s["revisar"] + s["ok"] == s["n"] for s in names.values())
+
+
+def test_prototype_page_is_served_and_handles_odd_words(client):
+    assert client.get("/prototipo").status_code == 200
+    # the original JS prototype produced NaN for this word; the API must not care
+    assert 0 <= client.post("/predict", json={"text": "constructor"}).json()["spam_probability"] <= 1

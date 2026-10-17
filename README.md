@@ -45,13 +45,17 @@ Medido con textos escritos aparte y nunca usados para entrenar (muestras pequeñ
 - Enron es de 1999-2005: el spam moderno (phishing actual, imágenes, HTML) se detecta peor. La app mitiga esto con el feedback.
 - El ham de Enron es correo corporativo; correos personales muy distintos pueden dar falsos positivos. Ajusta `SPAM_THRESHOLD` (por defecto 0,5; súbelo para tolerar menos falsos positivos).
 
+## Prototipo web (revisión del trabajo de la compañera)
+
+`/prototipo` es el prototipo HTML original conectado al modelo real (explicación por palabra, métricas en vivo, corrección). La revisión del original, con sus defectos medidos, está en [docs/REVISION_PROTOTIPO.md](docs/REVISION_PROTOTIPO.md).
+
 ## Uso
 
 ```bash
 pip install -r requirements-dev.txt
 python -m spam_agent.train          # descarga datos, compara modelos, escribe models/ y data/*.csv.gz
 pytest -q
-uvicorn spam_agent.api:app --reload # UI en http://localhost:8000
+uvicorn spam_agent.api:app --reload # UI en http://localhost:8000 · prototipo en http://localhost:8000/prototipo
 ```
 
 ```bash

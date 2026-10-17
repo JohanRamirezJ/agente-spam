@@ -7,6 +7,10 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+import json
+
+from . import eval_final, legit_modern, spanish_modern
+from .explain import explain
 from .model import SpamAgent
 from .retrain import retrain
 from .store import FeedbackStore
@@ -49,6 +53,39 @@ def create_app() -> FastAPI:
     def predict(e: Email):
         p = float(state["agent"].score([e.text])[0])
         return {"label": "spam" if p >= THRESHOLD else "ham", "verdict": verdict(p), "spam_probability": round(p, 4)}
+
+    @app.post("/explain")
+    def explain_endpoint(e: Email):
+        """Prediction plus the words that pushed it up or down (occlusion), for the prototype UI."""
+        r = explain(state["agent"], e.text)
+        r["verdict"] = verdict(r["probability"])
+        r["probability"] = round(r["probability"], 4)
+        return r
+
+    @app.get("/metrics")
+    def metrics():
+        """Stored test metrics plus fresh counts on the hand-written evaluation sets (computed live, not hard-coded)."""
+        agent = state["agent"]
+        stored = json.loads((ROOT / "models" / "metrics.json").read_text())
+
+        def tiers(texts):
+            s = agent.score(texts)
+            return {"n": len(texts), "spam": int((s >= SURE_THRESHOLD).sum()),
+                    "revisar": int(((s >= THRESHOLD) & (s < SURE_THRESHOLD)).sum()), "ok": int((s < THRESHOLD).sum())}
+
+        sets = [
+            ("Test final: estafas (ES+EN)", eval_final.SPAM, 1), ("Test final: legítimos", eval_final.LEGIT, 0),
+            ("Desarrollo: estafas en español", spanish_modern.EVAL_SPAM, 1), ("Desarrollo: legítimos en español", spanish_modern.EVAL_HAM, 0),
+            ("Desarrollo: promos/códigos/recibos legítimos", legit_modern.EVAL_LEGIT, 0),
+        ]
+        return {"enron_test": {"metrics": stored["test"], "confusion_matrix": stored["confusion_matrix"], "n": stored["test_n"],
+                               "by_source": stored["by_source"], "model": stored["model"]},
+                "hand_written_sets": [{"name": n, "is_scam_set": bool(y), **tiers(t)} for n, t, y in sets],
+                "thresholds": {"revisar": THRESHOLD, "spam": SURE_THRESHOLD}}
+
+    @app.get("/prototipo")
+    def prototipo():
+        return FileResponse(ROOT / "static" / "prototipo.html")
 
     @app.post("/feedback")
     def feedback(f: Feedback):

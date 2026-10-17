@@ -10,14 +10,15 @@ Clasifica correos como **spam / no spam** y **aprende de tus correcciones**.
 
 | precisión | recall | F1 | falsos positivos (ham→spam) |
 |---|---|---|---|
-| 98,87 % | 98,03 % | 98,45 % | 0,83 % (17 de 2.042) |
+| 98,81 % | 98,49 % | 98,65 % | 0,88 % (18 de 2.042) |
 
 Por fuente: Enron F1 0,987 · SMS F1 0,938 (menos datos y textos cortos).
 
 ## Español
 
-Con datos solo en inglés el modelo **no** generaliza bien a español: detecta el spam, pero marca como spam la mitad de los correos legítimos (F1 0,80 en un test de 16 frases). No se pudo acceder a un corpus real en español (Kaggle/HF bloqueados), así que se añadió un set semilla escrito a mano (`spam_agent/spanish_seed.py`) con el que el test llega a 16/16.
-**Es una muestra muy pequeña y generada con plantillas: tómalo como indicativo, no como garantía.** La vía real de mejora es el feedback: corrige los errores en español y reentrena. Si consigues un dataset español de Kaggle, ponlo en `data/raw/` y añádelo en `data.py`.
+Con datos solo en inglés el modelo no generaliza bien al español. No se pudo acceder a un corpus real en español (Kaggle/HF bloqueados), así que se añadieron ejemplos **sintéticos** escritos a mano: `spanish_seed.py` (básico) y `spanish_modern.py` (1.400 ejemplos de estafas actuales: phishing Nequi/Bancolombia, paquetería, DIAN/SAT, streaming, cripto/IA, empleo falso, WhatsApp, y correo legítimo que parece sospechoso).
+
+En 60 mensajes escritos aparte y nunca usados para entrenar: **F1 0,68 → 0,84** (inglés se mantiene en 0,9865). Es una muestra pequeña: indicativo, no garantía. Explicación completa en [docs/COMO_FUNCIONA.md](docs/COMO_FUNCIONA.md).
 
 ## Limitaciones
 - Enron es de 1999-2005: el spam moderno (phishing actual, imágenes, HTML) se detecta peor. La app mitiga esto con el feedback.

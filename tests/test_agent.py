@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from spam_agent import spanish_seed
+from spam_agent import spanish_modern, spanish_seed
 from spam_agent.model import SpamAgent
 
 ROOT = __import__("pathlib").Path(__file__).resolve().parent.parent
@@ -75,3 +75,17 @@ def test_retrain_promotes_and_learns(client):
     assert rep["promoted"] is True
     assert rep["holdout_f1_after"] > 0.97
     assert client.post("/predict", json={"text": text}).json()["label"] == "spam"
+
+
+def test_spanish_modern_heldout(agent):
+    """60 hand-written messages never used for training. Floor set below the measured 0.84 to catch regressions."""
+    x = spanish_modern.EVAL_SPAM + spanish_modern.EVAL_HAM
+    y = [1] * len(spanish_modern.EVAL_SPAM) + [0] * len(spanish_modern.EVAL_HAM)
+    assert agent.f1(x, y) > 0.78
+    ham_scores = agent.score(spanish_modern.EVAL_HAM)
+    assert (ham_scores >= 0.5).mean() < 0.15  # false positives on legitimate Spanish mail
+
+
+def test_spanish_train_and_eval_do_not_overlap():
+    train, _ = spanish_modern.train_examples()
+    assert not set(train) & set(spanish_modern.EVAL_SPAM + spanish_modern.EVAL_HAM)

@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import ComplementNB
 from sklearn.svm import LinearSVC
 
-from . import data, spanish_seed
+from . import data, spanish_modern, spanish_seed
 from .features import vectorize
 from .model import SpamAgent, new_classifier
 
@@ -33,6 +33,8 @@ def main():
     print(f"base corpus: {len(df)} unique docs, spam rate {df.label.mean():.3f}")
     es_x, es_y = spanish_seed.train_examples()
     es = pd.DataFrame({"text": es_x, "label": es_y, "source": "es_seed"})
+    mx, my = spanish_modern.train_examples()
+    es = pd.concat([es, pd.DataFrame({"text": mx, "label": my, "source": "es_modern"})], ignore_index=True)
 
     train, rest = train_test_split(df, test_size=0.2, random_state=0, stratify=df.label)
     val, test = train_test_split(rest, test_size=0.5, random_state=0, stratify=rest.label)
@@ -82,6 +84,11 @@ def main():
     pe = agent.predict(spanish_seed.TEST_SPAM + spanish_seed.TEST_HAM)
     ye = [1] * len(spanish_seed.TEST_SPAM) + [0] * len(spanish_seed.TEST_HAM)
     final["spanish_heldout_indicative"] = {**metrics(ye, pe), "n": len(ye)}
+    xm = spanish_modern.EVAL_SPAM + spanish_modern.EVAL_HAM
+    ym = [1] * len(spanish_modern.EVAL_SPAM) + [0] * len(spanish_modern.EVAL_HAM)
+    final["spanish_modern_eval"] = {**metrics(ym, agent.predict(xm)), "n": len(ym),
+                                    "confusion_matrix": confusion_matrix(ym, agent.predict(xm)).tolist()}
+    print("spanish modern eval (n=60, hand-written, held out):", final["spanish_modern_eval"])
     print(classification_report(test.label, pt, target_names=["ham", "spam"], digits=4))
     print("spanish held-out (n=16, indicative only):", final["spanish_heldout_indicative"])
 

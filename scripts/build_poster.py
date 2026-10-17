@@ -60,7 +60,7 @@ def sigmoid_path():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--integrantes", default="[Nombres del grupo]")
+    ap.add_argument("--integrantes", default="Sergio Galvis, Sergio Cuesta, Gloria Mozquera y Johan Ramírez")
     ap.add_argument("--no-pdf", action="store_true")
     a = ap.parse_args()
 

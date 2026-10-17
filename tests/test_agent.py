@@ -113,3 +113,24 @@ def test_legit_marketing_and_codes_mostly_not_flagged(agent):
 def test_confident_spam_verdict_is_rare_on_legit(agent):
     sure = int((agent.score(legit_modern.EVAL_LEGIT) >= 0.8).sum())
     assert sure <= 2  # only ambiguous cases may reach "revisar"; almost nothing legit is confidently "spam"
+
+
+def test_one_sided_feedback_does_not_collapse_scam_detection():
+    """Learning only 'not spam' corrections must not make the model stop detecting scams (seen in testing)."""
+    a = SpamAgent.load(ROOT / "models" / "model.joblib", ROOT / "data" / "replay.csv.gz")
+    scams = spanish_modern.EVAL_SPAM + eval_final.SPAM
+    before = int((a.score(scams) >= 0.5).sum())
+    promos, _ = legit_modern.train_examples(n=10, seed=11)
+    for t in promos:
+        a.learn([t], [0])
+    after = int((a.score(scams) >= 0.5).sum())
+    assert after >= before - 5, (before, after)
+
+
+def test_retrain_refuses_a_model_that_loses_scam_recall(client):
+    for t in legit_modern.train_examples(n=60, seed=12)[0]:
+        client.post("/feedback", json={"text": t, "is_spam": False})
+    rep = client.post("/retrain", headers={"X-Admin-Token": "secret"}).json()
+    assert "scam_recall_after" in rep
+    if rep["promoted"]:
+        assert rep["scam_recall_after"] >= rep["scam_recall_before"] - 0.03

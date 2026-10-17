@@ -31,8 +31,8 @@ texto ──► limpieza ──► features (números) ──► clasificador �
 
 Hay **dos niveles**:
 
-1. **Inmediato (`POST /feedback`)**: tú dices "esto era spam" o "esto no era spam". El modelo hace unas pasadas de `partial_fit` con ese ejemplo, su probabilidad cambia al momento (la interfaz muestra el antes y el después) y la corrección queda guardada en SQLite.
-2. **Consolidado (`POST /retrain`)**: crea una copia del modelo (el *challenger*), la entrena con todas las correcciones acumuladas más una muestra de 3.000 ejemplos originales (para que no olvide lo anterior), y mide el F1 de ambos sobre un conjunto de control fijo de 2.000 correos. **Solo reemplaza al modelo actual si no empeora más de 0,003 de F1.** Así una mala racha de correcciones no estropea el modelo.
+1. **Inmediato (`POST /feedback`)**: tú dices "esto era spam" o "esto no era spam". El modelo hace una pasada de `partial_fit` con ese ejemplo **más una muestra equilibrada de 1.024 ejemplos viejos por clase** (repaso), y la corrección queda guardada en SQLite. El cambio es gradual y deliberadamente suave (ver "Lecciones" abajo).
+2. **Consolidado (`POST /retrain`)**: crea una copia del modelo (el *challenger*), la entrena con todas las correcciones acumuladas más una muestra de 3.000 ejemplos originales (para que no olvide lo anterior), y mide el F1 de ambos sobre un conjunto de control fijo de 2.000 correos. **Solo reemplaza al modelo actual si no empeora más de 0,003 de F1 ni pierde más de 3 puntos de recall en un set de estafas en español e inglés.** Así una mala racha de correcciones no estropea el modelo.
 
 Qué **no** hace: no se entrena solo sin que nadie lo corrija. Aprende de las correcciones que recibe. Un agente que se auto-etiqueta sin supervisión tiende a reforzar sus propios errores.
 
@@ -97,3 +97,13 @@ Un script que lea tus correos con la API de Gmail y llame a `/predict`. Recomien
 - **Render**: *New → Blueprint* y elige el repo (usa `render.yaml`). Define `RETRAIN_TOKEN` para habilitar `/retrain`.
 - **Docker**: `docker build -t agente-spam . && docker run -p 8000:8000 -v spamdata:/data agente-spam`. El volumen `spamdata` conserva lo aprendido entre reinicios.
 - Antes de exponerlo a internet agrega autenticación a `/predict` y `/feedback`: ahora mismo cualquiera podría enviar correcciones falsas y degradar el modelo.
+
+## 7. Lecciones medidas con correos reales
+
+Con 35 correos reales de una bandeja (promociones de Temu, Twitch, Buscalibre, Terpel, LinkedIn…; ninguno es estafa) se midió, dejando fuera una marca completa cada vez:
+
+- **El modelo marcaba 18 de 31 promos de una marca nueva** como sospechosas. Las promociones reales usan "último aviso", "sorteo", "reclama tu regalo", y se parecen a las estafas.
+- **Aprender solo "no es spam" en caliente es peligroso.** Con 3 pasadas y poco repaso, las promos bajaron de 18 a 1, pero las estafas de control detectadas bajaron de 5 de 5 a 0 de 5. Si solo corriges falsos positivos, el agente puede dejar de detectar estafas.
+- **Con 1 pasada y 1.024 ejemplos de repaso por clase** (lo que usa ahora), 10 correcciones seguidas cuestan 1 estafa de 25 detectadas. Es seguro pero el efecto sobre las promos es lento.
+- **Reentrenar desde cero con las promos tampoco es gratis:** más peso a las promos baja los falsos positivos (18 → 12 → 4 de 31) pero también las estafas en español detectadas (22 → 18 → 14 de 30). Con estas características un modelo no separa bien una promo en español de una estafa en español; es un intercambio, no un error corregible con más datos sintéticos.
+- **Conclusión de diseño:** por eso hay tres veredictos y la regla de nunca borrar los "revisar". Para romper el intercambio hacen falta estafas reales etiquetadas o un modelo que entienda la intención (embeddings preentrenados).

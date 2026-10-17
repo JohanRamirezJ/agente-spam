@@ -37,6 +37,8 @@ Medido con textos escritos aparte y nunca usados para entrenar (muestras pequeñ
 **Qué se intentó y no sirvió:** señales de intención como características extra (empeoró), 16 combinaciones de hiperparámetros (7-10 errores en 90 mensajes: ruido), y una segunda ronda de datos sintéticos (empate: mejoró estafas en español, empeoró la bandeja personal).
 **Una fuga de datos que se detectó y corrigió:** en la ronda 2, frases del test se habían copiado en las plantillas de entrenamiento y daban un F1 de ~1,0 engañoso. Se eliminaron y hay una prueba automática que lo impide (`test_no_eval_text_appears_in_training_data`).
 
+**Con correo real (35 promos de una bandeja, ninguna estafa):** el modelo marcó 19 como sospechosas (2 `spam`, 17 `revisar`), bastante peor que con los textos sintéticos. Aprenderlas "en caliente" arreglaba las promos pero hundía la detección de estafas en español, así que `/feedback` ahora mezcla cada corrección con ejemplos viejos y `/retrain` verifica que no se pierda recall de estafas. Detalle y cifras en docs/COMO_FUNCIONA.md, sección 7.
+
 **Techo actual:** el modelo cuenta palabras y fragmentos; no entiende la intención. Para pasar de aquí hacen falta (a) correos reales etiquetados o (b) embeddings multilingües preentrenados, que no se pudieron descargar desde este entorno (Hugging Face bloqueado).
 
 ## Limitaciones

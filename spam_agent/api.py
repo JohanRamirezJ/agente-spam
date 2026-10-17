@@ -13,6 +13,7 @@ from .store import FeedbackStore
 
 ROOT = Path(__file__).resolve().parent.parent
 SHIPPED_MODEL = ROOT / "models" / "model.joblib"
+REPLAY_CSV = ROOT / "data" / "replay.csv.gz"
 RUNTIME = Path(os.environ.get("DATA_DIR", ROOT / "runtime"))
 THRESHOLD = float(os.environ.get("SPAM_THRESHOLD", "0.5"))  # at/above: "revisar" (or spam)
 SURE_THRESHOLD = float(os.environ.get("SPAM_SURE_THRESHOLD", "0.8"))  # at/above: confident spam
@@ -38,7 +39,7 @@ def create_app() -> FastAPI:
     live = RUNTIME / "model.joblib"
     if not live.exists():  # first boot: start from the shipped model
         shutil.copy(SHIPPED_MODEL, live)
-    state = {"agent": SpamAgent.load(live), "store": FeedbackStore(RUNTIME / "feedback.db")}
+    state = {"agent": SpamAgent.load(live, REPLAY_CSV), "store": FeedbackStore(RUNTIME / "feedback.db")}
 
     @app.get("/health")
     def health():

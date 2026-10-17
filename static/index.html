@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agente anti-spam</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1c2330;--card:#fff;--bd:#d9dee7;--spam:#c62828;--ham:#2e7d32;--acc:#2f5fd0}
+@media (prefers-color-scheme:dark){:root{--bg:#12151b;--fg:#e6e9ef;--card:#1b2029;--bd:#2c3340;--spam:#ef5350;--ham:#66bb6a;--acc:#7da2ff}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:24px 16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;margin-top:16px}
+textarea{width:100%;min-height:180px;box-sizing:border-box;border:1px solid var(--bd);border-radius:8px;padding:10px;background:var(--bg);color:var(--fg);font:inherit}
+button{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer;margin:8px 8px 0 0}
+button.alt{background:transparent;color:var(--fg);border:1px solid var(--bd)}
+.verdict{font-size:1.6rem;font-weight:700}.spam{color:var(--spam)}.ham{color:var(--ham)}
+.bar{height:10px;background:var(--bd);border-radius:5px;overflow:hidden;margin:8px 0}.bar>i{display:block;height:100%;background:var(--spam)}
+small{opacity:.75}
+</style></head><body><main>
+<h1>Agente anti-spam</h1>
+<p>Pega un correo (asunto y cuerpo). Funciona en inglés y, con menos precisión, en español. Si se equivoca, corrígelo y aprende.</p>
+<textarea id="t" placeholder="Pega aquí el correo..."></textarea>
+<button id="go">Analizar</button>
+<div class="card" id="res" hidden>
+  <div class="verdict" id="v"></div>
+  <div class="bar"><i id="b"></i></div>
+  <small id="p"></small>
+  <div id="fb" style="margin-top:12px">¿Es correcto?
+    <button class="alt" data-s="true">Era spam</button><button class="alt" data-s="false">No era spam</button></div>
+  <small id="msg"></small>
+</div>
+<p><small id="stats"></small></p>
+<script>
+const $=id=>document.getElementById(id);
+async function stats(){try{const s=await (await fetch('/stats')).json();$('stats').textContent=
+ `Correcciones aprendidas: ${s.feedback_total} · reentrenamientos: ${s.retrains}`}catch(e){}}
+$('go').onclick=async()=>{const text=$('t').value.trim();if(!text)return;
+ const r=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+ if(!r.ok){alert('Error '+r.status);return}
+ const d=await r.json();$('res').hidden=false;$('msg').textContent='';
+ $('v').textContent=d.label==='spam'?'SPAM':'No es spam';$('v').className='verdict '+d.label;
+ $('b').style.width=(d.spam_probability*100)+'%';$('p').textContent='Probabilidad de spam: '+(d.spam_probability*100).toFixed(1)+'%'};
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{
+ const r=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:$('t').value,is_spam:b.dataset.s==='true'})});
+ const d=await r.json();$('msg').textContent=`Aprendido. Probabilidad de spam: ${(d.spam_probability_before*100).toFixed(1)}% → ${(d.spam_probability_after*100).toFixed(1)}%`;stats()});
+stats();
+</script></main></body></html>

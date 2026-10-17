@@ -1,0 +1,85 @@
+{
+  "model": "sgd_log_loss",
+  "test": {
+    "precision": 0.9887193098871931,
+    "recall": 0.9802631578947368,
+    "f1": 0.9844730756524612,
+    "false_positive_rate": 0.00832517140058766
+  },
+  "test_n": 3562,
+  "confusion_matrix": [
+    [
+      2025,
+      17
+    ],
+    [
+      30,
+      1490
+    ]
+  ],
+  "by_source": {
+    "enron": {
+      "precision": 0.9896193771626297,
+      "recall": 0.9834938101788171,
+      "f1": 0.9865470852017937,
+      "false_positive_rate": 0.009578544061302681
+    },
+    "sms": {
+      "precision": 0.967741935483871,
+      "recall": 0.9090909090909091,
+      "f1": 0.9375,
+      "false_positive_rate": 0.004201680672268907
+    }
+  },
+  "candidates": {
+    "sgd_modified_huber": {
+      "val_f1": 0.9805473128915265,
+      "val_precision": 0.9821664464993395,
+      "val_recall": 0.9789335088874259,
+      "secs": 1.5
+    },
+    "sgd_log_loss": {
+      "val_f1": 0.9842001316655694,
+      "val_precision": 0.9842001316655694,
+      "val_recall": 0.9842001316655694,
+      "secs": 1.5
+    },
+    "sgd_hinge": {
+      "val_f1": 0.9804700430321086,
+      "val_precision": 0.9860186418109188,
+      "val_recall": 0.9749835418038183,
+      "secs": 1.6
+    },
+    "passive_aggressive": {
+      "val_f1": 0.9842209072978304,
+      "val_precision": 0.9829284307288247,
+      "val_recall": 0.9855167873601053,
+      "secs": 2.1
+    },
+    "complement_nb": {
+      "val_f1": 0.9757536041939712,
+      "val_precision": 0.9712981082844097,
+      "val_recall": 0.9802501645819618,
+      "secs": 0.2
+    },
+    "ref_linear_svc": {
+      "val_f1": 0.9858506087528792,
+      "val_precision": 0.9855263157894737,
+      "val_recall": 0.9861751152073732,
+      "secs": 4.2
+    },
+    "ref_logreg": {
+      "val_f1": 0.9812191103789127,
+      "val_precision": 0.9821899736147758,
+      "val_recall": 0.9802501645819618,
+      "secs": 4.8
+    }
+  },
+  "spanish_heldout_indicative": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "false_positive_rate": 0.0,
+    "n": 16
+  }
+}

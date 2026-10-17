@@ -1,0 +1,13 @@
+# Render Blueprint: New > Blueprint > pick this repo. Free plan has an ephemeral disk, so learned
+# feedback resets on redeploy/restart; add a persistent disk (paid) and keep DATA_DIR=/data to keep it.
+services:
+  - type: web
+    name: agente-spam
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATA_DIR
+        value: /data
+      - key: RETRAIN_TOKEN
+        generateValue: true

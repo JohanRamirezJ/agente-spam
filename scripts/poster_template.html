@@ -3,41 +3,41 @@
 <title>Clasificador de correos de phishing y estafas</title>
 <style>
 @page { size: ${W}px ${H}px; margin: 0; }
-:root { --navy:#1e2a4a; --bg:#eef1f6; --card:#fff; --line:#cfd6e4; --red:#c62828; --green:#2e7d32; --amber:#b26a00; --ink:#1b2333; --mut:#5a667d; }
+:root { --navy:#19161b; --bg:#f6f3ec; --card:#fff; --line:#ddd5bd; --red:#e2001a; --green:#2e7d32; --amber:#b26a00; --ink:#1f1b20; --mut:#6b6455; }
 * { box-sizing:border-box; margin:0; padding:0; }
 html,body { width:${W}px; height:${H}px; background:#fff; }
 body { font-family:"Helvetica Neue",Helvetica,Arial,"Liberation Sans",sans-serif; color:var(--ink); }
 .poster { width:${W}px; height:${H}px; background:var(--bg); display:flex; flex-direction:column; overflow:hidden; }
 header { height:196px; padding:22px 30px 0; display:grid; grid-template-columns:280px 1fr 160px; gap:22px; align-items:start; }
-.who { background:var(--card); border:2px solid var(--navy); border-radius:12px; padding:9px 13px; font-size:13px; line-height:1.3; }
-.who b { display:block; font-size:11.5px; letter-spacing:.04em; color:var(--navy); margin-top:4px; } .who b:first-child { margin-top:0; }
+.who { background:var(--card); border:2px solid var(--navy); border-left:8px solid #e2001a; border-radius:12px; padding:9px 13px; font-size:13px; line-height:1.3; }
+.who b { display:block; font-size:11.5px; letter-spacing:.04em; color:#e2001a; margin-top:4px; } .who b:first-child { margin-top:0; }
 .titlebox { text-align:center; } .titlebox h1 { font-size:46px; line-height:1.04; font-weight:800; color:var(--navy); letter-spacing:-.01em; }
-.titlebox p { margin-top:12px; font-size:18px; color:#33405c; }
-.logo { width:150px; height:150px; margin-top:-4px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13.8px; color:#8a95aa; margin-left:10px; overflow:hidden; }
+.titlebox p { margin-top:12px; font-size:18px; color:#4a4336; }
+.logo { width:150px; height:150px; margin-top:-4px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13.8px; color:#8d8573; margin-left:10px; overflow:hidden; }
 .logo img { width:100%; height:100%; object-fit:contain; }
-.rule { height:3px; background:var(--navy); margin:12px 30px 0; }
+.rule { height:4px; background:#e2001a; margin:12px 30px 0; border-bottom:3px solid #c19900; box-sizing:content-box; }
 main { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:22px; padding:16px 30px 14px; min-height:0; }
 .col { display:flex; flex-direction:column; justify-content:space-between; gap:12px; min-height:0; }
-.sec h2 { background:var(--navy); color:#fff; text-align:center; font-size:19.1px; letter-spacing:.04em; padding:8px 10px; border-radius:6px; font-weight:800; }
+.sec h2 { background:var(--navy); color:#fff; border-bottom:3px solid #c19900; text-align:center; font-size:19.1px; letter-spacing:.04em; padding:8px 10px; border-radius:6px; font-weight:800; }
 .sec .body { padding:9px 4px 0; font-size:15.5px; line-height:1.42; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
 .row { display:flex; gap:12px; align-items:center; }
 ul { padding-left:18px; } li { margin:3px 0; }
 .steps { display:flex; flex-direction:column; gap:2px; }
-.step { display:flex; gap:10px; align-items:flex-start; } .step .n { flex:none; width:26px; height:26px; border-radius:50%; background:var(--navy); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:14.8px; margin-top:1px; }
+.step { display:flex; gap:10px; align-items:flex-start; } .step .n { flex:none; width:26px; height:26px; border-radius:50%; background:#e2001a; color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:14.8px; margin-top:1px; }
 .step h3 { font-size:15.5px; color:var(--navy); } .step p { font-size:14.6px; line-height:1.35; }
 .arrow { text-align:center; color:var(--navy); line-height:10px; font-size:14.8px; }
-.formula { font-family:"DejaVu Sans Mono","Courier New",monospace; font-size:13.8px; background:#f3f5fa; border:1px solid var(--line); border-radius:6px; padding:5px 8px; margin-top:4px; }
+.formula { font-family:"DejaVu Sans Mono","Courier New",monospace; font-size:13.8px; background:#f8f5ea; border:1px solid var(--line); border-radius:6px; padding:5px 8px; margin-top:4px; }
 .ui { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
 .ui h4 { font-size:12.7px; color:var(--mut); margin-bottom:5px; text-transform:uppercase; letter-spacing:.05em; }
-.mail { font-size:13.4px; line-height:1.38; background:#f6f8fc; border:1px solid var(--line); border-radius:8px; padding:8px; color:#27324a; }
-.verdict { border-radius:8px; padding:8px 10px; background:#fdecea; border:1px solid #f1b3ae; color:#8c1d18; }
+.mail { font-size:13.4px; line-height:1.38; background:#faf8f2; border:1px solid var(--line); border-radius:8px; padding:8px; color:#2b262c; }
+.verdict { border-radius:8px; padding:8px 10px; background:#fdebed; border:1px solid #f2a8b0; color:#a0001a; }
 .verdict .v { font-weight:800; font-size:15.9px; } .verdict .p { font-size:27.0px; font-weight:800; }
-.pbar { height:8px; background:#f3cfcc; border-radius:4px; margin-top:5px; overflow:hidden; } .pbar i { display:block; height:100%; width:${banco_prob_w}; background:var(--red); }
+.pbar { height:8px; background:#f6c7cd; border-radius:4px; margin-top:5px; overflow:hidden; } .pbar i { display:block; height:100%; width:${banco_prob_w}; background:var(--red); }
 .wrow { display:flex; align-items:center; gap:6px; margin-top:5px; font-size:13.1px; } .wtok { width:80px; font-family:"DejaVu Sans Mono",monospace; }
-.wbar { flex:1; height:7px; background:#e8ecf4; border-radius:4px; overflow:hidden; } .wbar i { display:block; height:100%; background:#e57373; }
+.wbar { flex:1; height:7px; background:#ece6d4; border-radius:4px; overflow:hidden; } .wbar i { display:block; height:100%; background:#e57373; }
 .wval { width:40px; text-align:right; font-family:"DejaVu Sans Mono",monospace; color:var(--mut); }
-.gen { border:2px solid var(--navy); background:#e9eefb; border-radius:12px; padding:11px 14px; font-size:15.0px; line-height:1.42; }
+.gen { border:2px solid var(--navy); background:#fbf6e2; border-radius:12px; padding:11px 14px; font-size:15.0px; line-height:1.42; }
 .gen h3 { font-size:17.0px; color:var(--navy); text-align:center; margin-bottom:6px; letter-spacing:.03em; }
 .gen .ex { margin-top:5px; padding:6px 9px; background:#fff; border-radius:8px; border:1px solid var(--line); font-size:14.2px; }
 .gen .ex b.r { color:var(--amber); } .gen .ex em { color:var(--mut); font-style:normal; }
@@ -45,25 +45,25 @@ ul { padding-left:18px; } li { margin:3px 0; }
 .mc { text-align:center; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 4px; }
 .mc small { display:block; font-size:12.7px; color:var(--mut); } .mc strong { display:block; font-size:22.3px; color:var(--navy); margin-top:2px; }
 table { width:100%; border-collapse:collapse; margin-top:7px; font-size:14.2px; } th,td { border:1px solid var(--line); padding:5px 6px; text-align:center; }
-th { background:#e3e9f5; color:var(--navy); font-size:13.1px; } td:first-child, th:first-child { text-align:left; }
+th { background:#f1e7bd; color:var(--navy); font-size:13.1px; } td:first-child, th:first-child { text-align:left; }
 .s { color:var(--red); font-weight:700; } .r { color:var(--amber); font-weight:700; } .o { color:var(--green); font-weight:700; }
 .sub { font-size:13.1px; color:var(--mut); margin-top:7px; font-weight:700; }
 .concl { font-size:14.8px; line-height:1.4; margin-top:8px; }
-.refs { font-size:13.1px; line-height:1.38; color:#33405c; } .refs li { margin:2px 0; }
+.refs { font-size:13.1px; line-height:1.38; color:#4a4336; } .refs li { margin:2px 0; }
 
-.stepbox { background:#e1eaf8; border:1px solid #b9c9e6; border-radius:10px; padding:6px 10px; }
+.stepbox { background:#faf3d9; border:1px solid #e0cd85; border-radius:10px; padding:6px 10px; }
 .splits { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:6px; }
-.splits div { background:#fff; border:1px solid #b9c9e6; border-radius:8px; padding:5px 6px; text-align:center; font-size:12.6px; line-height:1.3; }
+.splits div { background:#fff; border:1px solid #e0cd85; border-radius:8px; padding:5px 6px; text-align:center; font-size:12.6px; line-height:1.3; }
 .splits b { display:block; font-size:16px; color:var(--navy); }
 .arrow2 { text-align:center; color:var(--navy); font-size:15px; line-height:11px; margin:1px 0; }
-.mc.g { background:#e8f5e9; border-color:#b7dcb9; } .mc.g strong { color:#1b5e20; }
+.mc.g { background:#fbf6e2; border-color:#d9c36a; } .mc.g strong { color:#19161b; }
 .refs ol { padding-left:20px; }
-footer { height:46px; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-size:15.9px; letter-spacing:.03em; }
+footer { height:46px; border-top:4px solid #c19900; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-size:15.9px; letter-spacing:.03em; }
 </style></head><body>
 <div class="poster">
 <header>
   <div class="who"><b>INTEGRANTES:</b>${integrantes}<b>ASIGNATURA:</b>Metodología de la Investigación (Machine Learning)<b>PROGRAMA:</b>Ingeniería de Sistemas</div>
-  <div class="titlebox"><h1>CLASIFICADOR DE CORREOS DE PHISHING Y ESTAFAS</h1><p>Una aproximación con regresión logística y características de texto</p></div>
+  <div class="titlebox"><h1>CLASIFICADOR DE CORREOS<br><span style="color:#e2001a">DE PHISHING Y ESTAFAS</span></h1><p>Una aproximación con regresión logística y características de texto</p></div>
   <div class="logo">${logo}</div>
 </header>
 <div class="rule"></div>
@@ -71,13 +71,13 @@ footer { height:46px; background:var(--navy); color:#fff; display:flex; align-it
 <div class="col">
   <div class="sec"><h2>INTRODUCCIÓN</h2><div class="body row">
     <p>El phishing y las estafas por correo buscan robar información o dinero. Este proyecto entrena un modelo de clasificación de texto que estima la probabilidad de que un correo sea una estafa, y mide qué tan bien generaliza ante mensajes que nunca vio.</p>
-    <svg width="170" height="112" viewBox="-6 0 170 112" style="flex:none"><rect x="6" y="10" width="42" height="30" rx="4" fill="#fff" stroke="#1e2a4a" stroke-width="2.5"/><path d="M7 12l20 17 20-17" fill="none" stroke="#1e2a4a" stroke-width="2.5"/><ellipse cx="82" cy="22" rx="20" ry="7" fill="#dbe4f7" stroke="#1e2a4a" stroke-width="2.5"/><path d="M62 22v22c0 4 9 7 20 7s20-3 20-7V22" fill="#eef2fb" stroke="#1e2a4a" stroke-width="2.5"/><path d="M27 42v14M82 52v8" stroke="#1e2a4a" stroke-width="2.5"/><text x="62" y="76" text-anchor="middle" font-size="10" font-weight="700" fill="#1e2a4a" font-family="Arial">Machine learning</text><text x="4" y="102" font-size="10" fill="#c62828" font-weight="700" font-family="Arial">Amenazas</text><text x="72" y="102" font-size="10" fill="#2e7d32" font-weight="700" font-family="Arial">Correos seguros</text></svg>
+    <svg width="170" height="112" viewBox="-6 0 170 112" style="flex:none"><rect x="6" y="10" width="42" height="30" rx="4" fill="#fff" stroke="#1e2a4a" stroke-width="2.5"/><path d="M7 12l20 17 20-17" fill="none" stroke="#1e2a4a" stroke-width="2.5"/><ellipse cx="82" cy="22" rx="20" ry="7" fill="#faf3d9" stroke="#1e2a4a" stroke-width="2.5"/><path d="M62 22v22c0 4 9 7 20 7s20-3 20-7V22" fill="#eef2fb" stroke="#1e2a4a" stroke-width="2.5"/><path d="M27 42v14M82 52v8" stroke="#1e2a4a" stroke-width="2.5"/><text x="62" y="76" text-anchor="middle" font-size="10" font-weight="700" fill="#1e2a4a" font-family="Arial">Machine learning</text><text x="4" y="102" font-size="10" fill="#c62828" font-weight="700" font-family="Arial">Amenazas</text><text x="72" y="102" font-size="10" fill="#2e7d32" font-weight="700" font-family="Arial">Correos seguros</text></svg>
   </div></div>
   <div class="sec"><h2>PREGUNTA DE INVESTIGACIÓN Y OBJETIVOS</h2><div class="body">
     <p><b>Pregunta:</b> ¿Cómo diseñar un modelo de clasificación de texto que identifique phishing, y qué tan bien generaliza frente a ejemplos no vistos?</p>
     <div class="row" style="align-items:flex-start;margin-top:7px"><div style="flex:1"><p><b>Objetivos</b></p>
     <ul><li>Diseñar un clasificador de estafas con código accesible.</li><li>Entrenarlo con correos públicos y ejemplos propios en español e inglés.</li><li>Medir la generalización con mensajes nuevos y evitar el sobreajuste.</li></ul></div>
-    <svg width="86" height="86" viewBox="0 0 86 86" style="flex:none;margin-top:4px"><circle cx="40" cy="46" r="32" fill="#e1eaf8" stroke="#1e2a4a" stroke-width="3"/><circle cx="40" cy="46" r="21" fill="#fff" stroke="#1e2a4a" stroke-width="3"/><circle cx="40" cy="46" r="10" fill="#c62828"/><path d="M40 46L74 12" stroke="#1e2a4a" stroke-width="3.5"/><path d="M62 10l14 -2 -2 14z" fill="#1e2a4a"/></svg></div>
+    <svg width="86" height="86" viewBox="0 0 86 86" style="flex:none;margin-top:4px"><circle cx="40" cy="46" r="32" fill="#faf3d9" stroke="#1e2a4a" stroke-width="3"/><circle cx="40" cy="46" r="21" fill="#fff" stroke="#1e2a4a" stroke-width="3"/><circle cx="40" cy="46" r="10" fill="#c62828"/><path d="M40 46L74 12" stroke="#1e2a4a" stroke-width="3.5"/><path d="M62 10l14 -2 -2 14z" fill="#1e2a4a"/></svg></div>
   </div></div>
   <div class="sec"><h2>METODOLOGÍA</h2><div class="body"><div class="steps">
     <div class="step stepbox"><span class="n">1</span><div><h3>Datos</h3><p>35.612 correos únicos de Enron y SMS (inglés) más 7.000 ejemplos sintéticos escritos por el equipo en español e inglés.</p></div></div><div class="arrow2">▼</div>
@@ -88,7 +88,7 @@ footer { height:46px; background:var(--navy); color:#fff; display:flex; align-it
       <div class="splits"><div><b>80 %</b>Entrenamiento<br>ajusta los coeficientes β</div><div><b>10 %</b>Validación<br>elige el modelo</div><div><b>10 %</b>Prueba<br>se usa una sola vez</div></div></div></div><div class="arrow2">▼</div>
     <div class="step stepbox"><span class="n">5</span><div><h3>Regresión logística</h3><p>Convierte la evidencia del texto en una probabilidad entre 0 y 1.</p>
       <div class="row" style="gap:10px;align-items:center"><div class="formula">z = β₀ + Σ(βᵢ·xᵢ)<br>P(y=1|x) = 1 / (1 + e<sup>−z</sup>)</div>
-      <svg width="200" height="76" viewBox="0 0 220 82"><line x1="20" y1="70" x2="206" y2="70" stroke="#8a95aa"/><line x1="110" y1="6" x2="110" y2="74" stroke="#8a95aa"/><line x1="20" y1="40" x2="206" y2="40" stroke="#b9c9e6" stroke-dasharray="3"/><path d="${sigmoid}" fill="none" stroke="#2f5fd0" stroke-width="2.6"/><text x="114" y="14" font-size="10" fill="#5a667d" font-family="Arial">P=1</text><text x="190" y="80" font-size="10" fill="#5a667d" font-family="Arial">z</text></svg></div>
+      <svg width="200" height="76" viewBox="0 0 220 82"><line x1="20" y1="70" x2="206" y2="70" stroke="#8d8573"/><line x1="110" y1="6" x2="110" y2="74" stroke="#8d8573"/><line x1="20" y1="40" x2="206" y2="40" stroke="#e0cd85" stroke-dasharray="3"/><path d="${sigmoid}" fill="none" stroke="#e2001a" stroke-width="2.6"/><text x="114" y="14" font-size="10" fill="#5a667d" font-family="Arial">P=1</text><text x="190" y="80" font-size="10" fill="#5a667d" font-family="Arial">z</text></svg></div>
     </div></div>
   </div></div></div>
   <div class="sec"><h2>HALLAZGOS Y LIMITACIONES</h2><div class="body"><ul>

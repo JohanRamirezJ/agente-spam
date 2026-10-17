@@ -69,11 +69,18 @@ Como los puntajes de estafas formales y de promociones se solapan, el API devuel
 ```bash
 git clone https://github.com/JohanRamirezJ/agente-spam && cd agente-spam
 git checkout ccr-f6cd9f0e-7811t1
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements-dev.txt
-pytest -q                                   # verifica que todo funciona
-uvicorn spam_agent.api:app --reload         # abre http://localhost:8000
+python -m venv .venv
 ```
+
+Activar el entorno virtual: en Mac/Linux `source .venv/bin/activate`; en Windows `cmd` `.venv\Scripts\activate.bat`; en PowerShell `.venv\Scripts\Activate.ps1`. Luego:
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+uvicorn spam_agent.api:app
+```
+
+Abre http://localhost:8000 o http://localhost:8000/prototipo. (Sin comentarios con `#` en la misma línea: en `cmd` de Windows rompen el comando.)
 
 ### Reentrenar desde cero (opcional, ~2 min)
 ```bash

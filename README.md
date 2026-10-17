@@ -53,10 +53,13 @@ Medido con textos escritos aparte y nunca usados para entrenar (muestras pequeñ
 
 ```bash
 pip install -r requirements-dev.txt
-python -m spam_agent.train          # descarga datos, compara modelos, escribe models/ y data/*.csv.gz
 pytest -q
-uvicorn spam_agent.api:app --reload # UI en http://localhost:8000 · prototipo en http://localhost:8000/prototipo
+uvicorn spam_agent.api:app
 ```
+
+Luego abre http://localhost:8000 (interfaz simple) o http://localhost:8000/prototipo (prototipo con métricas y explicación).
+No pegues comentarios con `#` en la misma línea del comando: en el `cmd` de Windows el `#` no inicia un comentario y `uvicorn` falla.
+Para reentrenar desde cero (descarga datos, compara modelos, escribe `models/` y `data/*.csv.gz`): `python -m spam_agent.train`.
 
 ```bash
 curl -X POST localhost:8000/predict  -H 'content-type: application/json' -d '{"text":"You won a free prize, click now"}'

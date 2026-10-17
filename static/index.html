@@ -10,12 +10,12 @@ main{max-width:720px;margin:0 auto;padding:24px 16px}
 textarea{width:100%;min-height:180px;box-sizing:border-box;border:1px solid var(--bd);border-radius:8px;padding:10px;background:var(--bg);color:var(--fg);font:inherit}
 button{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer;margin:8px 8px 0 0}
 button.alt{background:transparent;color:var(--fg);border:1px solid var(--bd)}
-.verdict{font-size:1.6rem;font-weight:700}.spam{color:var(--spam)}.ham{color:var(--ham)}
+.verdict{font-size:1.6rem;font-weight:700}.spam{color:var(--spam)}.ham,.ok{color:var(--ham)}.revisar{color:#b26a00}
 .bar{height:10px;background:var(--bd);border-radius:5px;overflow:hidden;margin:8px 0}.bar>i{display:block;height:100%;background:var(--spam)}
 small{opacity:.75}
 </style></head><body><main>
 <h1>Agente anti-spam</h1>
-<p>Pega un correo (asunto y cuerpo). Funciona en inglés y, con menos precisión, en español. Si se equivoca, corrígelo y aprende.</p>
+<p>Pega un correo (asunto y cuerpo). Aquí <b>spam</b> es lo que intenta robar datos o dinero (pedir claves, pagos, "tu cuenta tiene un problema"); la publicidad de tiendas no cuenta. Funciona mejor en inglés que en español. Si se equivoca, corrígelo y aprende.</p>
 <textarea id="t" placeholder="Pega aquí el correo..."></textarea>
 <button id="go">Analizar</button>
 <div class="card" id="res" hidden>
@@ -35,7 +35,7 @@ $('go').onclick=async()=>{const text=$('t').value.trim();if(!text)return;
  const r=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
  if(!r.ok){alert('Error '+r.status);return}
  const d=await r.json();$('res').hidden=false;$('msg').textContent='';
- $('v').textContent=d.label==='spam'?'SPAM':'No es spam';$('v').className='verdict '+d.label;
+ $('v').textContent={spam:'SPAM (posible estafa)',revisar:'REVISAR: sospechoso',ok:'Parece legítimo'}[d.verdict];$('v').className='verdict '+d.verdict;
  $('b').style.width=(d.spam_probability*100)+'%';$('p').textContent='Probabilidad de spam: '+(d.spam_probability*100).toFixed(1)+'%'};
 document.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{
  const r=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:$('t').value,is_spam:b.dataset.s==='true'})});

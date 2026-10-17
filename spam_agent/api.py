@@ -14,7 +14,13 @@ from .store import FeedbackStore
 ROOT = Path(__file__).resolve().parent.parent
 SHIPPED_MODEL = ROOT / "models" / "model.joblib"
 RUNTIME = Path(os.environ.get("DATA_DIR", ROOT / "runtime"))
-THRESHOLD = float(os.environ.get("SPAM_THRESHOLD", "0.5"))
+THRESHOLD = float(os.environ.get("SPAM_THRESHOLD", "0.5"))  # at/above: "revisar" (or spam)
+SURE_THRESHOLD = float(os.environ.get("SPAM_SURE_THRESHOLD", "0.8"))  # at/above: confident spam
+
+
+def verdict(p: float) -> str:
+    """spam = confident; revisar = ambiguous, a human should look; ok = not spam. Never auto-hide 'revisar'."""
+    return "spam" if p >= SURE_THRESHOLD else "revisar" if p >= THRESHOLD else "ok"
 MAX_TEXT = 20000
 
 
@@ -41,7 +47,7 @@ def create_app() -> FastAPI:
     @app.post("/predict")
     def predict(e: Email):
         p = float(state["agent"].score([e.text])[0])
-        return {"label": "spam" if p >= THRESHOLD else "ham", "spam_probability": round(p, 4)}
+        return {"label": "spam" if p >= THRESHOLD else "ham", "verdict": verdict(p), "spam_probability": round(p, 4)}
 
     @app.post("/feedback")
     def feedback(f: Feedback):

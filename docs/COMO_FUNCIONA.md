@@ -17,7 +17,7 @@ texto ──► limpieza ──► features (números) ──► clasificador �
 | `features.py` | Convierte texto en números. Reemplaza URLs y números por marcas (`urltoken`, `numtoken`), y cuenta palabras sueltas, pares de palabras y fragmentos de 2-4 letras. Usa *hashing*: no guarda vocabulario, así que acepta palabras nuevas sin reentrenar desde cero. |
 | `model.py` | El clasificador (`SGDClassifier` de regresión logística). Aprende con `partial_fit`, es decir, puede actualizarse con un solo ejemplo. |
 | `data.py` | Descarga y une el dataset de Enron (el de Kaggle) y el de SMS, y elimina duplicados. |
-| `spanish_seed.py`, `spanish_modern.py` | Ejemplos en español generados a mano (ver sección 5). |
+| `spanish_seed.py`, `spanish_modern.py`, `legit_modern.py` | Ejemplos sintéticos: estafas en español y correo legítimo (ver sección 4). |
 | `train.py` | Entrena 7 modelos, compara, elige el mejor que pueda seguir aprendiendo y guarda `models/model.joblib` + `models/metrics.json`. |
 | `store.py` | Base SQLite con todas las correcciones del usuario. |
 | `retrain.py` | Reentrenamiento seguro (ver sección 4). |
@@ -46,20 +46,29 @@ No tuve acceso a un corpus real en español (Kaggle y Hugging Face están bloque
 
 Los textos se arman mezclando frases por categoría con marcas, montos, enlaces y saludos distintos. **No es spam real recopilado**: lo escribí yo a partir de patrones de estafa que conozco, así que puede no reflejar las campañas de esta semana.
 
-### Resultado medido (60 mensajes escritos aparte, con otra redacción, nunca usados para entrenar)
+### Definición de spam y correo legítimo
 
-| | F1 español | Spam perdido | Ham marcado como spam |
-|---|---|---|---|
-| Antes (solo inglés + 300 básicos) | 0,68 | 12 de 30 | 5 de 30 |
-| Ahora (+ 1.400 modernos) | 0,84 | 7 de 30 | 2 de 30 |
+Spam aquí = intenta robar información o dinero. Para que el modelo no confunda eso con publicidad, `legit_modern.py` añade 1.400 ejemplos legítimos (promociones de tiendas, códigos de verificación, avisos de Nequi/bancos, LinkedIn, boletines, en español e inglés).
 
-Inglés (3.562 correos): F1 0,9865, sin degradación. Los fallos que quedan en español son estafas redactadas de forma muy formal (por ejemplo una "DIAN" o un "embargo") y un código 2FA que se parece a una oferta. Con 60 mensajes el margen de error es grande: tómalo como orientativo.
+### Resultado medido (textos escritos aparte, nunca usados para entrenar)
+
+| prueba | antes | ahora |
+|---|---|---|
+| 28 correos reales de una bandeja, todos legítimos: marcados spam | 12 | 0 (4 en "revisar") |
+| 30 legítimos de prueba: marcados spam | 5 | 1 (3 en "revisar") |
+| 30 estafas en español perdidas (clasificadas "ok") | 7 | 9 |
+| F1 inglés (3.562 correos) | 0,9865 | 0,9835 |
+
+Lo que **no funcionó**: se probó añadir 7 señales de intención (pide clave, pide pago, "cuenta bloqueada", urgencia…) como características extra. El F1 en español bajó de 0,824 a 0,800 y se descartaron. Con pocos ejemplos, un modelo lineal no las aprovecha.
+
+### Tres veredictos en lugar de dos
+Como los puntajes de estafas formales y de promociones se solapan, el API devuelve `verdict`: `spam` (≥ 0,8), `revisar` (0,5-0,8) u `ok`. Los umbrales se cambian con `SPAM_SURE_THRESHOLD` y `SPAM_THRESHOLD`. En las pruebas, ningún correo legítimo de tu bandeja llegó a `spam`.
 
 ## 5. Cómo mejorarlo de verdad
 
 1. **Usa tu correo real**: exporta unos cientos de correos tuyos (spam y no spam) y cárgalos con `/feedback` o añádelos a `replay.csv.gz`. Es la mejora más grande que puedes hacer, porque tu distribución real difiere de Enron.
 2. **Dataset español real**: si encuentras uno en Kaggle (busca "spam español" / "phishing spanish"), descárgalo a `data/raw/`, añade la lectura en `data.py::load_base` y ejecuta `python -m spam_agent.train`.
-3. **Ajusta el umbral** con `SPAM_THRESHOLD` (sube a 0,7 si prefieres que casi nunca bloquee un correo bueno).
+3. **Ajusta los umbrales** con `SPAM_THRESHOLD` y `SPAM_SURE_THRESHOLD`.
 
 ## 6. Cómo implementarlo paso a paso
 
@@ -89,7 +98,7 @@ requests.post("http://localhost:8000/feedback", json={"text": "...", "is_spam": 
 ```
 
 ### Conectarlo a Gmail (idea, no incluido)
-Un script que lea tus correos no leídos con la API de Gmail, llame a `/predict` y mueva a spam los de probabilidad alta. Recomiendo empezar solo **etiquetando** ("posible-spam") en vez de mover o borrar, y alimentar `/feedback` cuando corrijas una etiqueta.
+Un script que lea tus correos con la API de Gmail y llame a `/predict`. Recomiendo solo **etiquetar** ("posible-estafa" para `spam`, "revisar" para el término medio) en vez de mover o borrar, y alimentar `/feedback` cuando corrijas una etiqueta.
 
 ### Desplegar
 - **Render**: *New → Blueprint* y elige el repo (usa `render.yaml`). Define `RETRAIN_TOKEN` para habilitar `/retrain`.

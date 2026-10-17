@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from spam_agent import spanish_modern, spanish_seed
+from spam_agent import legit_modern, spanish_modern, spanish_seed
 from spam_agent.model import SpamAgent
 
 ROOT = __import__("pathlib").Path(__file__).resolve().parent.parent
@@ -53,7 +53,7 @@ def test_online_learning_changes_prediction():
 def test_api_flow(client):
     assert client.get("/health").json() == {"status": "ok"}
     r = client.post("/predict", json={"text": SPAM}).json()
-    assert r["label"] == "spam"
+    assert r["label"] == "spam" and r["verdict"] == "spam"
     assert client.post("/predict", json={"text": HAM}).json()["label"] == "ham"
     fb = client.post("/feedback", json={"text": HAM, "is_spam": True}).json()
     assert fb["spam_probability_after"] > fb["spam_probability_before"]
@@ -89,3 +89,14 @@ def test_spanish_modern_heldout(agent):
 def test_spanish_train_and_eval_do_not_overlap():
     train, _ = spanish_modern.train_examples()
     assert not set(train) & set(spanish_modern.EVAL_SPAM + spanish_modern.EVAL_HAM)
+
+
+def test_legit_marketing_and_codes_mostly_not_flagged(agent):
+    """Project definition: store promos, 2FA codes and receipts are not spam. Measured 4/30 false positives."""
+    fp = int((agent.score(legit_modern.EVAL_LEGIT) >= 0.5).sum())
+    assert fp <= 6
+
+
+def test_confident_spam_verdict_is_rare_on_legit(agent):
+    sure = int((agent.score(legit_modern.EVAL_LEGIT) >= 0.8).sum())
+    assert sure <= 2  # only ambiguous cases may reach "revisar"; almost nothing legit is confidently "spam"

@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import ComplementNB
 from sklearn.svm import LinearSVC
 
-from . import data, spanish_modern, spanish_seed
+from . import data, legit_modern, spanish_modern, spanish_seed
 from .features import vectorize
 from .model import SpamAgent, new_classifier
 
@@ -35,6 +35,9 @@ def main():
     es = pd.DataFrame({"text": es_x, "label": es_y, "source": "es_seed"})
     mx, my = spanish_modern.train_examples()
     es = pd.concat([es, pd.DataFrame({"text": mx, "label": my, "source": "es_modern"})], ignore_index=True)
+
+    lx, ly = legit_modern.train_examples()
+    es = pd.concat([es, pd.DataFrame({"text": lx, "label": ly, "source": "legit_modern"})], ignore_index=True)
 
     train, rest = train_test_split(df, test_size=0.2, random_state=0, stratify=df.label)
     val, test = train_test_split(rest, test_size=0.5, random_state=0, stratify=rest.label)
@@ -84,6 +87,9 @@ def main():
     pe = agent.predict(spanish_seed.TEST_SPAM + spanish_seed.TEST_HAM)
     ye = [1] * len(spanish_seed.TEST_SPAM) + [0] * len(spanish_seed.TEST_HAM)
     final["spanish_heldout_indicative"] = {**metrics(ye, pe), "n": len(ye)}
+    pl = agent.predict(legit_modern.EVAL_LEGIT)
+    final["legit_eval"] = {"n": len(pl), "false_positives": int(pl.sum())}
+    print("legit eval (hand-written, held out):", final["legit_eval"])
     xm = spanish_modern.EVAL_SPAM + spanish_modern.EVAL_HAM
     ym = [1] * len(spanish_modern.EVAL_SPAM) + [0] * len(spanish_modern.EVAL_HAM)
     final["spanish_modern_eval"] = {**metrics(ym, agent.predict(xm)), "n": len(ym),

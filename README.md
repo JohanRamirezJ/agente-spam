@@ -1,6 +1,8 @@
 # Agente anti-spam
 
-Clasifica correos como **spam / no spam** y **aprende de tus correcciones**.
+Clasifica correos y **aprende de tus correcciones**. **Definición de spam en este proyecto:** un mensaje que intenta robar información o dinero (pide claves o códigos, pide pagos, dice que "tu cuenta tiene un problema", premios o empleos falsos). La publicidad de tiendas, los códigos de verificación y los avisos del banco **no** son spam.
+
+Veredictos: `spam` (probabilidad ≥ 0,8), `revisar` (0,5-0,8, ambiguo: que lo mire una persona) y `ok`. Nunca borres ni ocultes automáticamente los `revisar`.
 
 - **Datos:** Enron Spam (el mismo corpus de Kaggle, descargado de un mirror público en GitHub; 35.612 textos únicos tras deduplicar) + SMS Spam Collection.
 - **Modelo:** features hash de palabras (1-2 gramas) y caracteres (2-4) + `SGDClassifier(log_loss)`. Se comparó contra Modified-Huber, Hinge, Passive-Aggressive, ComplementNB y, como techo offline, LinearSVC y LogisticRegression (ver `models/metrics.json`). Se eligió un modelo *online-capable* porque la mejora offline era de solo ~0,2 pts de F1.
@@ -10,15 +12,24 @@ Clasifica correos como **spam / no spam** y **aprende de tus correcciones**.
 
 | precisión | recall | F1 | falsos positivos (ham→spam) |
 |---|---|---|---|
-| 98,81 % | 98,49 % | 98,65 % | 0,88 % (18 de 2.042) |
+| 98.61 % | 98.09 % | 98.35 % | 1.03 % (21 de 2042) |
 
-Por fuente: Enron F1 0,987 · SMS F1 0,938 (menos datos y textos cortos).
+Por fuente: Enron F1 0.985 · SMS F1 0.954.
 
-## Español
+## Español y correo legítimo
 
-Con datos solo en inglés el modelo no generaliza bien al español. No se pudo acceder a un corpus real en español (Kaggle/HF bloqueados), así que se añadieron ejemplos **sintéticos** escritos a mano: `spanish_seed.py` (básico) y `spanish_modern.py` (1.400 ejemplos de estafas actuales: phishing Nequi/Bancolombia, paquetería, DIAN/SAT, streaming, cripto/IA, empleo falso, WhatsApp, y correo legítimo que parece sospechoso).
+Los datos de Enron llaman "spam" a casi toda la publicidad, lo que no coincide con la definición del proyecto. Se añadieron ejemplos **sintéticos** (`spanish_seed.py`, `spanish_modern.py`, `legit_modern.py`): estafas actuales (phishing Nequi/Bancolombia, paquetería, DIAN/SAT, streaming, cripto/IA, empleo falso, WhatsApp) y correo legítimo (promociones, códigos 2FA, recibos fintech, notificaciones de LinkedIn, boletines). Detalle en [docs/COMO_FUNCIONA.md](docs/COMO_FUNCIONA.md).
 
-En 60 mensajes escritos aparte y nunca usados para entrenar: **F1 0,68 → 0,84** (inglés se mantiene en 0,9865). Es una muestra pequeña: indicativo, no garantía. Explicación completa en [docs/COMO_FUNCIONA.md](docs/COMO_FUNCIONA.md).
+Medido con textos escritos aparte y nunca usados para entrenar (muestras pequeñas: orientativo):
+
+| prueba | antes | ahora |
+|---|---|---|
+| 28 correos reales de una bandeja personal, todos legítimos, marcados spam | 12 | **0** (4 en "revisar") |
+| 30 correos legítimos de prueba (promos, códigos, recibos) marcados spam | 5 | 1 (3 en "revisar") |
+| 30 estafas en español: detectadas como spam / revisar / perdidas | 23 detectadas, 7 perdidas | 8 spam, 13 revisar, **9 perdidas** |
+| F1 inglés (3.562 correos) | 0,9865 | 0,9835 |
+
+Es un intercambio: se redujeron mucho los falsos positivos a costa de perder más estafas en español. Con estos datos sintéticos los puntajes de estafas formales y promociones se solapan; la mejora real requiere tus correos etiquetados.
 
 ## Limitaciones
 - Enron es de 1999-2005: el spam moderno (phishing actual, imágenes, HTML) se detecta peor. La app mitiga esto con el feedback.

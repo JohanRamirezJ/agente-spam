@@ -12,10 +12,13 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from . import eval_final, legit_modern, spanish_modern
+from .envfile import load_dotenv
 from .explain import explain
 from .model import SpamAgent
 from .retrain import retrain
 from .store import FeedbackStore
+
+load_dotenv()  # settings and keys from .env (real environment variables take priority)
 
 ROOT = Path(__file__).resolve().parent.parent
 SHIPPED_MODEL = ROOT / "models" / "model.joblib"
@@ -74,6 +77,8 @@ def client_ip(request: Request) -> str:
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Agente anti-spam", version="1.0")
+    if os.environ.get("RETRAIN_TOKEN") == "cambia-esto-por-una-clave-larga":
+        print("AVISO: RETRAIN_TOKEN sigue con el valor de ejemplo de .env.example. Cámbialo por una clave propia.", flush=True)
     rate = int(os.environ.get("RATE_LIMIT_PER_MIN", "120"))  # writes/predictions per IP per minute; 0 disables
     hits: dict[str, deque] = defaultdict(deque)
 

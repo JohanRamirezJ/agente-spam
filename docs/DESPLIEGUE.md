@@ -55,7 +55,7 @@ Detalles y fuentes:
 
 ### A. Tu computador + túnel de Cloudflare (demo)
 
-1. Define las claves **antes** de arrancar (en `cmd` de Windows; en Mac/Linux usa `export`):
+1. Define las claves **antes** de arrancar. Lo más simple: `copy .env.example .env`, edita `RETRAIN_TOKEN` y `FEEDBACK_REQUIRES_TOKEN` (el programa lee el `.env` solo). O en `cmd` de Windows (en Mac/Linux usa `export`):
    ```
    set RETRAIN_TOKEN=pon-aqui-una-clave-larga
    set FEEDBACK_REQUIRES_TOKEN=true

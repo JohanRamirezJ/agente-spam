@@ -45,6 +45,8 @@ Base: `http://localhost:8000` · documentación interactiva automática en `/doc
 
 ## Variables de entorno
 
+Se leen del entorno o de un archivo `.env` en la raíz del proyecto (las variables reales del sistema tienen prioridad).
+
 | Variable | Por defecto | Efecto |
 |---|---|---|
 | `DATA_DIR` | `runtime/` | Dónde se guardan modelo, confirmaciones e historial |

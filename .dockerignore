@@ -3,3 +3,9 @@ data/raw
 runtime
 tests
 __pycache__
+.env
+private
+*.mbox
+Takeout
+confirmaciones*.json
+backups

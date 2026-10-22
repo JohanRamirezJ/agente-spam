@@ -20,7 +20,7 @@ pip install -r requirements.txt
 uvicorn spam_agent.api:app
 ```
 
-Abre **http://localhost:8000/prototipo**. No escribas comentarios con `#` en la misma línea del comando: en `cmd` de Windows rompen el comando.
+Abre **http://localhost:8000/prototipo**. Si creas un archivo `.env` (cópialo de `.env.example`), el programa lo lee solo al arrancar: ahí van las claves y ajustes; las variables reales del sistema tienen prioridad. No escribas comentarios con `#` en la misma línea del comando: en `cmd` de Windows rompen el comando.
 
 **Apagar:** `Ctrl + C` en esa ventana. Si cerraste la ventana y sigue corriendo: `netstat -ano | findstr :8000` y luego `taskkill /PID <número> /F`.
 
@@ -104,4 +104,6 @@ python -m spam_agent.train              reentrena el modelo base desde cero (des
 python scripts/compute_stats.py         recalcula intervalos de confianza y la prueba de McNemar
 python scripts/build_poster.py          regenera el póster (necesita: pip install playwright)
 python scripts/backup_feedback.py URL   guarda las confirmaciones de un servidor en un archivo con fecha
+python scripts/import_mbox.py          procesa tu correo de Takeout (ver docs/DATOS_PRIVADOS.md)
+python scripts/review_private.py FILE  etiqueta ese correo en la terminal
 ```

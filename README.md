@@ -13,6 +13,7 @@ Veredictos: **`spam`** (probabilidad ≥ 80 %), **`revisar`** (50 % a 80 %: ambi
 | [docs/GUIA_DE_USO.md](docs/GUIA_DE_USO.md) | Instalar, usar el prototipo, enseñarle con casos reales, solucionar problemas |
 | [docs/API.md](docs/API.md) | Endpoints, permisos, variables de entorno |
 | [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md) | Opciones para publicarlo, comparación, guías paso a paso y seguridad |
+| [docs/DATOS_PRIVADOS.md](docs/DATOS_PRIVADOS.md) | Usar tus correos reales (incluido Spam) sin que se filtren: Takeout, `.env`, anonimización, etiquetado |
 | [docs/COMO_FUNCIONA.md](docs/COMO_FUNCIONA.md) | El modelo y el ciclo de aprendizaje por dentro |
 | [docs/METODOLOGIA.md](docs/METODOLOGIA.md) | Objetivos, hipótesis, diseño estadístico y limitaciones (para el informe) |
 | [docs/REVISION_PROTOTIPO.md](docs/REVISION_PROTOTIPO.md) | Revisión del prototipo HTML original, con sus defectos medidos |
@@ -69,11 +70,15 @@ spam_agent/    api.py (servicio) · model.py · features.py · store.py (confirm
 static/        index.html (interfaz simple) · prototipo.html (prototipo completo)
 models/        model.joblib (modelo base) · metrics.json · stats.json
 data/          replay.csv.gz y holdout.csv.gz (muestras para reentrenar y validar)
-scripts/       compute_stats.py · build_poster.py · backup_feedback.py
+scripts/       compute_stats.py · build_poster.py · backup_feedback.py · import_mbox.py · review_private.py
 poster/        póster en PDF · prototipo/  prototipo HTML original
-docs/          documentación · tests/  pruebas (26)
+docs/          documentación · tests/  pruebas (31)
 Dockerfile · docker-compose.yml · Caddyfile · render.yaml · fly.toml · .env.example
 ```
+
+## Tus correos reales (privado)
+
+Puedes enseñarle al modelo con tu propio correo **sin que salga de tu computador**: exportas con Google Takeout (incluye Spam), `scripts/import_mbox.py` lo limpia y oculta datos personales, y `scripts/review_private.py` te deja etiquetarlo en la terminal. Los correos viven en `private/` (ignorada por git); el `.env` solo guarda rutas y nombres a ocultar, **nunca** los correos. Guía: [docs/DATOS_PRIVADOS.md](docs/DATOS_PRIVADOS.md).
 
 ## Despliegue y seguridad
 
@@ -86,7 +91,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-26 pruebas (unos 90 segundos): calidad del modelo, ausencia de solapamiento entre entrenamiento y evaluación, ciclo de confirmaciones, permisos, persistencia tras reiniciar, exportar/importar, reentrenar y volver atrás, límites de uso.
+31 pruebas (unos 100 segundos): calidad del modelo, ausencia de solapamiento entre entrenamiento y evaluación, ciclo de confirmaciones, permisos, persistencia tras reiniciar, exportar/importar, reentrenar y volver atrás, límites de uso.
 
 ## Limitaciones
 

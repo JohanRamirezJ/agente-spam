@@ -1,4 +1,8 @@
-"""Champion/challenger retraining: learn from all accumulated feedback, but only promote if it doesn't get worse."""
+"""Champion/challenger retraining.
+
+The challenger always starts from the shipped base model and learns from ALL currently confirmed feedback, so a
+deleted or flipped confirmation really disappears from the model. It only replaces the live model (the champion,
+which also carries provisional online updates) if it does not get worse."""
 from pathlib import Path
 
 import pandas as pd
@@ -19,18 +23,19 @@ def scam_guard():
 
 
 
-def retrain(agent: SpamAgent, store, replay_n: int = 3000, epochs: int = 3):
+def retrain(agent: SpamAgent, store, replay_n: int = 3000, epochs: int = 3, base: SpamAgent | None = None):
     """Return (agent_to_use, report). The caller swaps in the returned agent."""
     fb_x, fb_y = store.all()
     if not fb_x:
-        return agent, {"promoted": False, "reason": "no feedback yet"}
+        return agent, {"promoted": False, "reason": "Aún no hay confirmaciones guardadas para aprender."}
     replay = pd.read_csv(DATA / "replay.csv.gz").dropna().sample(frac=1, random_state=0).head(replay_n)
     holdout = pd.read_csv(DATA / "holdout.csv.gz").dropna()
 
     # feedback is repeated so it isn't drowned out by the replay sample
     texts = list(replay.text) + fb_x * 5
     labels = list(replay.label) + fb_y * 5
-    cand = agent.challenger(texts, labels, epochs=epochs)
+    cand = (base or agent).challenger(texts, labels, epochs=epochs)
+    cand.meta["feedback_updates"] = 0  # online updates were provisional; they are now consolidated
 
     old_f1 = agent.f1(holdout.text, holdout.label)
     new_f1 = cand.f1(holdout.text, holdout.label)
@@ -44,6 +49,8 @@ def retrain(agent: SpamAgent, store, replay_n: int = 3000, epochs: int = 3):
               "feedback_f1_before": fb_old, "feedback_f1_after": fb_new, "feedback_examples": len(fb_x),
               "scam_recall_before": rec_old, "scam_recall_after": rec_new}
     if ok:
-        cand.meta["retrains"] = cand.meta.get("retrains", 0) + 1
+        cand.meta["retrains"] = agent.meta.get("retrains", 0) + 1
         return cand, report
+    report["reason"] = ("El modelo nuevo empeoraba el F1 de control." if new_f1 < old_f1 - TOLERANCE
+                        else "El modelo nuevo perdía detección de estafas; se conserva el actual.")
     return agent, report

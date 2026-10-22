@@ -173,3 +173,137 @@ def test_stats_file_is_consistent():
     assert m["only_model"] > m["only_rules"] and m["p_value"] < 0.05
     f = st["final_set"]["scams_flagged"]
     assert f["wilson95"][0] <= f["p"] <= f["wilson95"][1]
+
+
+# ---- human-in-the-loop feedback: persistence, permissions, undo ------------------------------------------
+
+def _make_client(tmp_path, monkeypatch, token="secret"):
+    import importlib
+
+    from spam_agent import api
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    if token:
+        monkeypatch.setenv("RETRAIN_TOKEN", token)
+    else:
+        monkeypatch.delenv("RETRAIN_TOKEN", raising=False)
+    importlib.reload(api)
+    return TestClient(api.create_app())
+
+
+def test_store_migrates_an_old_database_and_dedupes(tmp_path):
+    import sqlite3
+
+    from spam_agent.store import FeedbackStore
+    db = sqlite3.connect(tmp_path / "old.db")
+    db.execute("CREATE TABLE feedback (id INTEGER PRIMARY KEY, text TEXT NOT NULL, label INTEGER NOT NULL, ts REAL NOT NULL)")
+    db.execute("INSERT INTO feedback(text,label,ts) VALUES ('hola viejo', 0, 1.0)")
+    db.commit(); db.close()
+    st = FeedbackStore(tmp_path / "old.db")  # must add the new columns without losing rows
+    assert st.count() == 1 and st.list()[0]["source"] == "ui" and st.list()[0]["prob_before"] is None
+    fid, created = st.add("mensaje nuevo", 1, 0.4, "ok")
+    assert created
+    fid2, created2 = st.add("  mensaje nuevo ", 0, 0.9, "spam")  # same text: latest confirmation wins
+    assert fid2 == fid and not created2 and st.count() == 2
+    assert st.label_counts() == {"scam": 0, "legit": 2}
+    assert st.delete(fid) and not st.delete(fid) and st.count() == 1
+
+
+def test_confirmations_survive_a_restart(tmp_path, monkeypatch):
+    c1 = _make_client(tmp_path, monkeypatch)
+    text = "Weekly newsletter from the gardening club, tulips on sale this weekend"
+    before = c1.post("/predict", json={"text": text}).json()["spam_probability"]
+    r = c1.post("/feedback", json={"text": text, "is_spam": True}).json()
+    assert r["stored"] and r["created"] and r["feedback_total"] == 1
+    learned = c1.post("/predict", json={"text": text}).json()["spam_probability"]
+    assert learned > before
+    c2 = _make_client(tmp_path, monkeypatch)  # a brand-new app instance on the same folder = restarting the program
+    assert c2.get("/stats").json()["feedback_total"] == 1
+    assert abs(c2.post("/predict", json={"text": text}).json()["spam_probability"] - learned) < 1e-6  # model was loaded, not retrained
+
+
+def test_feedback_list_export_import_roundtrip(tmp_path, monkeypatch):
+    c = _make_client(tmp_path, monkeypatch)
+    for t, y in [("promo de libros con 30% de descuento", False), ("confirma tu clave para evitar el bloqueo de tu cuenta", True)]:
+        c.post("/feedback", json={"text": t, "is_spam": y})
+    lst = c.get("/feedback").json()
+    assert lst["total"] == 2 and lst["labels"] == {"scam": 1, "legit": 1}
+    exported = c.get("/feedback/export").json()
+    assert exported["format"] == "agente-spam-feedback" and len(exported["items"]) == 2
+    other = _make_client(tmp_path / "other", monkeypatch)
+    assert other.post("/feedback/import", json={"items": exported["items"]}).status_code == 403  # needs admin
+    r = other.post("/feedback/import", json={"items": exported["items"]}, headers={"X-Admin-Token": "secret"}).json()
+    assert r["added"] == 2 and r["feedback_total"] == 2
+    r2 = other.post("/feedback/import", json={"items": exported["items"]}, headers={"X-Admin-Token": "secret"}).json()
+    assert r2["added"] == 0 and r2["updated"] == 2  # idempotent
+    bad = other.post("/feedback/import", json={"items": [{"text": "x", "label": 7}]}, headers={"X-Admin-Token": "secret"})
+    assert bad.status_code == 422
+
+
+def test_admin_actions_need_permission(tmp_path, monkeypatch):
+    c = _make_client(tmp_path, monkeypatch)  # token configured
+    fid = c.post("/feedback", json={"text": "texto cualquiera de prueba", "is_spam": False}).json()["id"]
+    for call in (lambda h: c.delete(f"/feedback/{fid}", headers=h), lambda h: c.post("/retrain", headers=h), lambda h: c.post("/rollback", headers=h)):
+        assert call({}).status_code == 403
+        assert call({"X-Admin-Token": "wrong"}).status_code == 403
+    assert c.delete(f"/feedback/{fid}", headers={"X-Admin-Token": "secret"}).status_code == 200
+
+
+def test_local_use_needs_no_token_but_proxies_are_refused(tmp_path, monkeypatch):
+    c = _make_client(tmp_path, monkeypatch, token=None)
+    fid = c.post("/feedback", json={"text": "otro texto de prueba", "is_spam": True}).json()["id"]
+    assert c.delete(f"/feedback/{fid}", headers={"X-Forwarded-For": "8.8.8.8"}).status_code == 403  # looks proxied
+    assert c.delete(f"/feedback/{fid}").status_code == 200  # direct local request
+
+
+def test_retrain_backup_history_and_rollback(tmp_path, monkeypatch):
+    c = _make_client(tmp_path, monkeypatch)
+    h = {"X-Admin-Token": "secret"}
+    assert c.post("/retrain", headers=h).json()["promoted"] is False  # nothing to learn yet
+    text = "Boletín del club de jardinería: tulipanes en oferta este fin de semana"
+    for _ in range(2):
+        c.post("/feedback", json={"text": text, "is_spam": True})
+    rep = c.post("/retrain", headers=h).json()
+    assert "scam_recall_after" in rep and "ts" in rep
+    if rep["promoted"]:
+        assert c.get("/stats").json()["has_previous_version"] is True
+        assert c.get("/stats").json()["online_updates"] == 0  # provisional updates were consolidated
+        assert c.post("/rollback", headers=h).json()["restored"] is True
+    else:
+        assert rep["reason"]
+    kinds = [e["kind"] for e in c.get("/history").json()["events"]]
+    assert "retrain" in kinds
+    assert c.get("/stats").json()["last_retrain"] is not None
+
+
+def test_retrain_forgets_a_deleted_confirmation(tmp_path, monkeypatch):
+    """A wrong confirmation must be removable: after deleting it and retraining, the model should not keep its effect."""
+    c = _make_client(tmp_path, monkeypatch)
+    h = {"X-Admin-Token": "secret"}
+    text = "Reunión de equipo mañana a las 10 para revisar el informe trimestral de ventas"
+    base_p = c.post("/predict", json={"text": text}).json()["spam_probability"]
+    fid = c.post("/feedback", json={"text": text, "is_spam": True}).json()["id"]  # a mistaken confirmation
+    assert c.post("/predict", json={"text": text}).json()["spam_probability"] > base_p
+    c.delete(f"/feedback/{fid}", headers=h)
+    # one more genuine confirmation so the retrain has something to learn
+    c.post("/feedback", json={"text": "Tu código de verificación es 123456, no lo compartas", "is_spam": False})
+    rep = c.post("/retrain", headers=h).json()
+    p_after = c.post("/predict", json={"text": text}).json()["spam_probability"]
+    if rep["promoted"]:
+        assert p_after < base_p + 0.15  # the deleted label no longer pulls it up
+
+
+def test_public_hardening_rate_limit_body_size_and_feedback_token(tmp_path, monkeypatch):
+    monkeypatch.setenv("RATE_LIMIT_PER_MIN", "4")
+    c = _make_client(tmp_path / "rl", monkeypatch)
+    codes = [c.post("/predict", json={"text": f"mensaje {i}"}).status_code for i in range(6)]
+    assert codes[:4] == [200] * 4 and codes[4:] == [429, 429]
+    assert c.get("/health").status_code == 200  # reads are never limited
+    big = c.post("/predict", content=b"x" * 10, headers={"content-length": "6000000", "content-type": "application/json"})
+    assert big.status_code in (413, 429)
+    monkeypatch.setenv("RATE_LIMIT_PER_MIN", "0")
+    monkeypatch.setenv("FEEDBACK_REQUIRES_TOKEN", "true")
+    c2 = _make_client(tmp_path / "ft", monkeypatch)
+    body = {"text": "texto de prueba para confirmar", "is_spam": False}
+    assert c2.post("/feedback", json=body).status_code == 403
+    assert c2.post("/feedback", json=body, headers={"X-Admin-Token": "secret"}).status_code == 200
+    assert c2.post("/predict", json={"text": "hola"}).status_code == 200  # analysing stays public

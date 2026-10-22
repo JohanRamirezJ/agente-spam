@@ -77,6 +77,9 @@
                 <button id="tab-btn-evaluacion" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-200/60 transition-all whitespace-nowrap flex items-center gap-2">
                     <span>⚖️</span> Métricas y Evaluación
                 </button>
+                <button id="tab-btn-aprendizaje" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-200/60 transition-all whitespace-nowrap flex items-center gap-2">
+                    <span>🧠</span> Aprendizaje
+                </button>
             </div>
         </div>
     </header>
@@ -131,10 +134,11 @@
                                 <p class="text-[11px] text-slate-500 mt-2">Aproximación: se quita una palabra a la vez. El modelo también usa fragmentos de letras y combinaciones de palabras, que no aparecen aquí.</p>
                             </div>
                             <div class="bg-white p-3.5 rounded-xl border border-cyber-border text-xs text-slate-600">
-                                <span class="font-bold text-slate-800 block mb-1">¿Se equivocó? Enséñale</span>
-                                <button data-fb="true" class="fb px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-lg mr-2">Era estafa</button>
-                                <button data-fb="false" class="fb px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg">No era estafa</button>
-                                <p id="fb-msg" class="mt-2 text-slate-500"></p>
+                                <span class="font-bold text-slate-800 block mb-1">Confirma la etiqueta real</span>
+                                <p class="mb-2 text-[11px] text-slate-500">Tú supervisas: el modelo solo aprende lo que una persona confirma. Se guarda con lo que el modelo había dicho y su criterio se ajusta de inmediato, con suavidad.</p>
+                                <button data-fb="true" class="fb px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-lg mr-2">Confirmar: ES estafa</button>
+                                <button data-fb="false" class="fb px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg">Confirmar: NO es estafa</button>
+                                <p id="fb-msg" class="mt-2 text-slate-600"></p>
                             </div>
                         </div>
                     </div>
@@ -229,11 +233,58 @@
                 </div>
             </div>
         </div>
+        <!-- ================= PESTAÑA 5: APRENDIZAJE CON RETROALIMENTACIÓN ================= -->
+        <div id="content-aprendizaje" class="tab-content space-y-6">
+            <div class="bg-white border border-cyber-border rounded-2xl p-6 shadow-sm space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Aprendizaje con retroalimentación humana</h2>
+                    <p class="text-sm text-cyber-muted">Lo que confirmas con casos reales se guarda, se usa para mejorar el modelo y se carga solo al volver a abrir el programa.</p>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 leading-relaxed">
+                    <b>¿Qué tipo de aprendizaje es?</b> Supervisado, con <i>humano en el circuito</i> (human-in-the-loop) e incremental: las etiquetas las pone una persona. No es aprendizaje por refuerzo clásico, que exige recompensas y una política de acciones. Sí es una práctica válida y común: el modelo mejora con casos reales confirmados por el equipo.
+                </div>
+
+                <ol class="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
+                    <li class="bg-slate-50 border border-cyber-border rounded-xl p-3"><b class="text-blue-700">1. Analizar</b><br>El modelo da su veredicto y las palabras que pesaron.</li>
+                    <li class="bg-slate-50 border border-cyber-border rounded-xl p-3"><b class="text-blue-700">2. Confirmar</b><br>Una persona dice si de verdad era estafa o no.</li>
+                    <li class="bg-slate-50 border border-cyber-border rounded-xl p-3"><b class="text-blue-700">3. Guardar</b><br>Se guarda en disco y el criterio se ajusta con suavidad.</li>
+                    <li class="bg-slate-50 border border-cyber-border rounded-xl p-3"><b class="text-blue-700">4. Reentrenar</b><br>Se parte del modelo base con todas las confirmaciones y se valida.</li>
+                    <li class="bg-slate-50 border border-cyber-border rounded-xl p-3"><b class="text-blue-700">5. Cargar</b><br>Solo se adopta si no empeora. Siempre se puede volver atrás.</li>
+                </ol>
+
+                <div id="learn-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                <p id="learn-storage" class="text-[11px] text-slate-500"></p>
+
+                <div class="flex flex-wrap items-end gap-3">
+                    <button id="btn-retrain" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-sm">Reentrenar y validar</button>
+                    <a id="btn-export" href="/feedback/export" download="confirmaciones.json" class="px-4 py-2.5 bg-white border border-cyber-border hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-xl">Exportar confirmaciones</a>
+                    <label class="px-4 py-2.5 bg-white border border-cyber-border hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-xl cursor-pointer">Importar confirmaciones<input id="file-import" type="file" accept=".json,application/json" class="hidden"></label>
+                    <button id="btn-rollback" class="px-4 py-2.5 bg-white border border-red-200 hover:bg-red-50 text-red-700 text-sm font-medium rounded-xl">Volver a la versión anterior</button>
+                    <label class="text-[11px] text-slate-500 ml-auto">Clave de administrador (solo si el servidor la exige)<input id="admin-token" type="password" autocomplete="off" class="block mt-1 border border-cyber-border rounded-lg px-2 py-1 text-xs w-48" placeholder="opcional"></label>
+                </div>
+
+                <div id="retrain-report" class="hidden rounded-xl border p-4 text-xs space-y-1"></div>
+
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 mb-2">Confirmaciones guardadas <span id="learn-total" class="font-normal text-slate-500"></span></h3>
+                    <div class="overflow-x-auto"><table class="w-full text-xs border border-cyber-border rounded-xl" id="fb-table"></table></div>
+                    <p class="text-[11px] text-slate-500 mt-1">Si te equivocaste al confirmar, bórrala aquí y pulsa «Reentrenar y validar»: el modelo se reconstruye sin ella.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 mb-2">Historial</h3>
+                    <div class="overflow-x-auto"><table class="w-full text-xs border border-cyber-border rounded-xl" id="hist-table"></table></div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <footer class="bg-white border-t border-cyber-border py-4 px-6 text-center text-xs text-cyber-muted mt-8">
         <p>Universidad — Metodología de la Investigación • Clasificador de estafas con modelo entrenado</p>
     </footer>
+
+    <div id="toast" class="hidden fixed bottom-4 right-4 max-w-sm bg-slate-900 text-white text-xs rounded-xl px-4 py-3 shadow-lg z-50"></div>
 
     <script>
         const PRESETS = {
@@ -266,12 +317,25 @@
             $('content-' + id).classList.add('active');
             $('tab-btn-' + id).className = TAB_ON;
             if (id === 'evaluacion') loadMetrics();
+            if (id === 'aprendizaje') loadLearning();
         }
 
-        async function api(path, body) {
+        let toastTimer;
+        function toast(msg, bad) {
+            const t = $('toast'); t.textContent = msg; t.className = 'fixed bottom-4 right-4 max-w-sm text-white text-xs rounded-xl px-4 py-3 shadow-lg z-50 ' + (bad ? 'bg-red-700' : 'bg-slate-900');
+            clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add('hidden'), 6000);
+        }
+        async function api(path, body, method) {
             try {
-                const r = await fetch(path, body ? {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)} : undefined);
-                if (!r.ok) throw new Error(r.status);
+                const init = {method: method || (body ? 'POST' : 'GET'), headers: {}};
+                if (body) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(body); }
+                const tok = $('admin-token').value.trim(); if (tok) init.headers['X-Admin-Token'] = tok;
+                const r = await fetch(path, init);
+                if (!r.ok) {
+                    let d = ''; try { d = (await r.json()).detail; } catch (e) {}
+                    toast(typeof d === 'string' && d ? d : 'Error ' + r.status + ' al llamar a ' + path, true);
+                    return null;
+                }
                 $('api-error').classList.add('hidden');
                 return await r.json();
             } catch (e) { $('api-error').classList.remove('hidden'); return null; }
@@ -287,11 +351,13 @@
             prob.textContent = (d.probability * 100).toFixed(1) + '%';
         }
 
+        let lastText = '', learningStale = true;
         async function analizar(text) {
             text = (text || textarea.value).trim();
             if (!text) { const p = $('result-panel'); p.style.borderColor = '#ef4444'; setTimeout(() => p.style.borderColor = '#e2e8f0', 1000); return; }
             const d = await api('/explain', {text});
             if (!d) return;
+            lastText = text;
             $('initial-state').classList.add('hidden'); $('active-results').classList.remove('hidden');
             renderVerdict($('verdict-card'), $('verdict-title'), $('verdict-prob'), d);
             const box = $('contrib-output'); box.replaceChildren();
@@ -319,8 +385,14 @@
             $('presets').appendChild(b);
         });
         document.querySelectorAll('.fb').forEach(b => b.addEventListener('click', async () => {
-            const d = await api('/feedback', {text: textarea.value, is_spam: b.dataset.fb === 'true'});
-            if (d) $('fb-msg').textContent = `Aprendido: probabilidad ${(d.spam_probability_before * 100).toFixed(1)}% → ${(d.spam_probability_after * 100).toFixed(1)}%. El cambio es gradual a propósito, para no olvidar lo anterior.`;
+            if (!lastText) return;
+            const d = await api('/feedback', {text: lastText, is_spam: b.dataset.fb === 'true'});
+            if (!d) return;
+            learningStale = true;
+            const pc = x => (x * 100).toFixed(1) + '%';
+            $('fb-msg').textContent = `✓ Guardado (#${d.id}${d.created ? '' : ', reemplaza una confirmación anterior del mismo texto'}). ` +
+                (d.model_agreed ? 'El modelo ya coincidía con tu confirmación. ' : 'El modelo NO coincidía: aprende de este caso. ') +
+                `Probabilidad: ${pc(d.spam_probability_before)} → ${pc(d.spam_probability_after)}. Confirmaciones guardadas: ${d.feedback_total}.`;
         }));
 
         GEN.forEach(text => {
@@ -355,7 +427,91 @@
                 tb.appendChild(r);
             });
         }
-        ['simulador', 'datos', 'generalizacion', 'evaluacion'].forEach(id => $('tab-btn-' + id).addEventListener('click', () => switchTab(id)));
+
+        // ---------- Aprendizaje: confirmaciones, reentrenar, exportar/importar, deshacer ----------
+        const fmtDate = ts => ts ? new Date(ts * 1000).toLocaleString('es-CO') : '';
+        const pct1 = x => (x * 100).toFixed(1) + '%';
+        function armed(btn, label, fn) {  // two-step confirmation without alert()
+            if (btn.dataset.armed) { clearTimeout(+btn.dataset.armed); delete btn.dataset.armed; btn.textContent = btn.dataset.label; return fn(); }
+            btn.dataset.label = btn.textContent; btn.textContent = label;
+            btn.dataset.armed = setTimeout(() => { delete btn.dataset.armed; btn.textContent = btn.dataset.label; }, 4000);
+        }
+        function addHeader(tb, cols) { const r = el('tr', 'bg-slate-50'); cols.forEach(h => r.appendChild(el('th', 'text-left p-2 font-semibold', h))); tb.appendChild(r); }
+
+        function renderReport(r) {
+            const box = $('retrain-report'); box.replaceChildren(); box.classList.remove('hidden');
+            box.className = 'rounded-xl border p-4 text-xs space-y-1 ' + (r.promoted ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900');
+            box.appendChild(el('div', 'font-bold text-sm', r.promoted ? '✅ Versión nueva adoptada' : '⏸ Se conserva la versión actual'));
+            if (r.reason) box.appendChild(el('div', '', r.reason));
+            if (r.holdout_f1_before !== undefined) {
+                box.appendChild(el('div', '', `F1 de control (2.000 correos retenidos): ${pct1(r.holdout_f1_before)} → ${pct1(r.holdout_f1_after)}`));
+                box.appendChild(el('div', '', `Detección de estafas (set de control en español e inglés): ${pct1(r.scam_recall_before)} → ${pct1(r.scam_recall_after)}`));
+                box.appendChild(el('div', '', `Confirmaciones usadas: ${r.feedback_examples}. Nota: acertar tus propias confirmaciones es memorizar; lo que importa es que no empeoren los controles.`));
+            }
+        }
+
+        async function loadLearning() {
+            const st = await api('/stats'); if (!st) return;
+            const cards = $('learn-cards'); cards.replaceChildren();
+            [['Confirmaciones guardadas', st.feedback_total, `${st.feedback_scam} estafa · ${st.feedback_legit} legítimo`],
+             ['Ajustes provisionales', st.online_updates, 'desde el último reentrenamiento'],
+             ['Reentrenamientos', st.retrains, 'versiones adoptadas'],
+             ['Versión anterior', st.has_previous_version ? 'Sí' : 'No', st.has_previous_version ? 'se puede restaurar' : 'aún no hay']].forEach(([k, v, sub]) => {
+                const c = el('div', 'bg-slate-50 p-4 rounded-2xl border border-cyber-border');
+                c.appendChild(el('div', 'text-blue-600 font-bold text-xs', k)); c.appendChild(el('div', 'text-2xl font-extrabold code-font mt-1', String(v))); c.appendChild(el('div', 'text-[11px] text-cyber-muted mt-1', sub)); cards.appendChild(c);
+            });
+            $('learn-storage').textContent = `El modelo y las confirmaciones se guardan en la carpeta «${st.storage}/» y se cargan automáticamente cuando el programa vuelve a iniciar.`;
+            if (st.last_retrain && $('retrain-report').classList.contains('hidden')) renderReport(st.last_retrain);
+
+            const fb = await api('/feedback?limit=100');
+            if (fb) {
+                $('learn-total').textContent = `(${fb.total}${fb.total > fb.items.length ? ', se muestran las 100 más recientes' : ''})`;
+                const tb = $('fb-table'); tb.replaceChildren(); addHeader(tb, ['#', 'Fecha', 'Etiqueta confirmada', 'El modelo decía', 'Texto', '']);
+                if (!fb.items.length) { const r = el('tr'); r.appendChild(el('td', 'p-3 text-slate-400 italic', 'Todavía no hay confirmaciones. Analiza un correo en el Simulador y confírmalo.')); r.firstChild.colSpan = 6; tb.appendChild(r); }
+                fb.items.forEach(it => {
+                    const r = el('tr', 'border-t border-cyber-border align-top');
+                    r.appendChild(el('td', 'p-2 code-font', String(it.id))); r.appendChild(el('td', 'p-2 whitespace-nowrap', fmtDate(it.ts)));
+                    r.appendChild(el('td', 'p-2 font-semibold ' + (it.label ? 'text-red-700' : 'text-emerald-700'), it.label ? 'Estafa' : 'Legítimo'));
+                    r.appendChild(el('td', 'p-2 code-font', it.prob_before === null ? '—' : `${it.verdict_before} (${pct1(it.prob_before)})`));
+                    r.appendChild(el('td', 'p-2', it.preview + (it.chars > 160 ? '…' : '')));
+                    const td = el('td', 'p-2'); const del = el('button', 'text-red-600 hover:underline', 'Borrar');
+                    del.addEventListener('click', () => armed(del, '¿Seguro?', async () => { const d = await api('/feedback/' + it.id, null, 'DELETE'); if (d) { toast(d.note); loadLearning(); } }));
+                    td.appendChild(del); r.appendChild(td); tb.appendChild(r);
+                });
+            }
+            const h = await api('/history');
+            if (h) {
+                const tb = $('hist-table'); tb.replaceChildren(); addHeader(tb, ['Fecha', 'Evento', 'Resultado']);
+                if (!h.events.length) { const r = el('tr'); r.appendChild(el('td', 'p-3 text-slate-400 italic', 'Sin eventos todavía.')); r.firstChild.colSpan = 3; tb.appendChild(r); }
+                h.events.slice(0, 20).forEach(e => {
+                    const r = el('tr', 'border-t border-cyber-border');
+                    const kind = {retrain: 'Reentrenamiento', rollback: 'Versión anterior restaurada', delete: 'Confirmación borrada', import: 'Importación'}[e.kind] || e.kind;
+                    const res = e.kind === 'retrain' ? (e.promoted ? 'Adoptada' : 'No adoptada' + (e.reason ? ': ' + e.reason : '')) : e.kind === 'import' ? `${e.added} nuevas, ${e.updated} actualizadas` : e.kind === 'delete' ? `#${e.id}` : '';
+                    [fmtDate(e.ts), kind, res].forEach(v => r.appendChild(el('td', 'p-2', v))); tb.appendChild(r);
+                });
+            }
+            learningStale = false;
+        }
+
+        $('btn-retrain').addEventListener('click', async () => {
+            const b = $('btn-retrain'); b.disabled = true; const old = b.textContent; b.textContent = 'Reentrenando… (puede tardar unos segundos)';
+            const r = await api('/retrain', {}); b.disabled = false; b.textContent = old;
+            if (r) { renderReport(r); toast(r.promoted ? 'Versión nueva adoptada.' : 'Se conserva la versión actual.'); loadLearning(); }
+        });
+        $('btn-rollback').addEventListener('click', () => armed($('btn-rollback'), '¿Seguro? Pulsa de nuevo', async () => {
+            const r = await api('/rollback', {}); if (r) { toast('Versión anterior restaurada.'); $('retrain-report').classList.add('hidden'); loadLearning(); }
+        }));
+        $('file-import').addEventListener('change', async ev => {
+            const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+            try {
+                const data = JSON.parse(await f.text());
+                const items = (Array.isArray(data) ? data : data.items || []).filter(i => i && typeof i.text === 'string' && (i.label === 0 || i.label === 1))
+                    .map(i => ({text: i.text, label: i.label, ts: i.ts ?? null, prob_before: i.prob_before ?? null, verdict_before: i.verdict_before ?? null}));
+                if (!items.length) { toast('El archivo no tiene confirmaciones válidas (text y label 0/1).', true); return; }
+                const r = await api('/feedback/import', {items}); if (r) { toast(`${r.added} nuevas, ${r.updated} actualizadas. ${r.note}`); loadLearning(); }
+            } catch (e) { toast('No se pudo leer el archivo: debe ser un JSON exportado desde esta página.', true); }
+        });
+        ['simulador', 'datos', 'generalizacion', 'evaluacion', 'aprendizaje'].forEach(id => $('tab-btn-' + id).addEventListener('click', () => switchTab(id)));
     </script>
 </body>
 </html>

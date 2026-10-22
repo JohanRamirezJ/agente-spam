@@ -13,7 +13,7 @@ Qué necesita el programa, qué opciones hay para publicarlo, cuál conviene y c
 | Disco (código + modelo + datos) | 7,3 MB | el estado guardado pesa menos de 20 MB |
 | Procesos | **1 proceso, 1 instancia** | el modelo vive en memoria; con varios procesos o instancias cada una aprendería cosas distintas |
 
-No medí el tamaño de la imagen de Docker ni hice el *build* real (en el entorno donde lo desarrollé Docker no tenía servicio). El CI de GitHub (`.github/workflows/ci.yml`) lo construye y prueba `/health` y `/predict`. Sí comprobé que el conjunto de archivos que copia el `Dockerfile` arranca solo y responde en todos los endpoints.
+La imagen de Docker **sí se construye y arranca de verdad**: el CI de GitHub (`.github/workflows/ci.yml`) la construyó en unos 26 s, la ejecutó y comprobó `/health`, `/metrics`, `/prototipo` y `/predict` (ejecución en verde del 22 de octubre de 2026). No medí el tamaño de la imagen.
 
 ## 2. La decisión que lo cambia todo: ¿se necesita persistencia?
 
@@ -120,6 +120,7 @@ Se guarda en `DATA_DIR` (`runtime/` en local, `/data` en Docker): `model.joblib`
 
 ## 8. Qué no está verificado
 
-- El *build* real de Docker (lo hace el CI) y cualquier despliegue en una plataforma: no tengo cuentas en ellas. Los archivos `render.yaml`, `fly.toml` y `docker-compose.yml` están validados solo en sintaxis.
+- Cualquier despliegue en una plataforma (Render, Fly.io, un VPS): no tengo cuentas en ellas. Los archivos `render.yaml`, `fly.toml` y `docker-compose.yml` están validados solo en sintaxis; la imagen de Docker en sí sí la prueba el CI.
+- Que el volumen persistente conserve el estado entre reinicios en una plataforma real (sí lo comprobé reiniciando el programa en local).
 - Precios y límites de terceros: pueden haber cambiado.
 - Que Hugging Face Spaces gratuito admita Docker hoy.

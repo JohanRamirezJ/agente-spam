@@ -88,3 +88,19 @@ Se rechaza H₀ con α = 0,05 **sobre estos mensajes**. Ver las limitaciones de 
 - **Aprender solo correcciones de un tipo es peligroso.** Enseñarle únicamente "no es estafa" en caliente hacía perder la detección de estafas en español; por eso cada corrección se mezcla con ejemplos antiguos y el reentrenamiento exige no perder recall de estafas.
 - **La definición de la clase positiva cambió durante el proyecto** (de "publicidad no deseada" a "intento de robar información o dinero") y condiciona todos los resultados.
 - **Siguiente paso:** estafas reales etiquetadas, o un modelo preentrenado que entienda la intención del mensaje.
+
+## 6. Protocolo para medir si la retroalimentación mejora el modelo
+
+El ciclo de confirmaciones es una **intervención** sobre el modelo, y que aparente funcionar no basta: el acierto sobre lo que se acaba de enseñar es memorización. Hasta ahora **no se ha demostrado una mejora neta** con retroalimentación real; sí se midió que aprender solo un tipo de corrección (solo «no es estafa») puede hundir la detección de estafas en español, por eso el ajuste en caliente se mezcla con ejemplos antiguos y el reentrenamiento tiene salvaguardas.
+
+Para medirlo bien:
+
+1. **Reunir N casos reales** que el equipo confirma (idealmente 100 o más, de ambos tipos).
+2. **Separar al azar** (estratificado, semilla fija) una parte, por ejemplo 30 %, como **conjunto de prueba de confirmaciones**; esos casos **no se enseñan** al modelo.
+3. **Enseñar el 70 % restante** con el ciclo (confirmar y reentrenar).
+4. **Comparar antes y después** sobre ese 30 %: precisión, recall, F1 y falsos positivos, con intervalos de confianza (bootstrap) y una prueba de McNemar pareada (mismos mensajes, modelo antes vs. después).
+5. **Vigilar los controles:** el F1 sobre los 2.000 correos retenidos y la detección de estafas del conjunto de control no deben empeorar.
+6. **Repetir** con otras separaciones al azar para ver cuánto varía el resultado.
+7. **Reportar también si no mejora.** Con pocos casos el intervalo será ancho y la diferencia puede no ser concluyente; decirlo es parte del hallazgo.
+
+Amenazas a la validez propias de este diseño: las confirmaciones las hace el mismo equipo que evalúa; los casos provienen de una sola bandeja o fuente (sesgo de selección); y si alguien confirma por lo que el modelo dijo en vez de por lo que sabe, se refuerzan los errores (sesgo de confirmación). La etiqueta debe decidirse **antes** de mirar el veredicto del modelo.

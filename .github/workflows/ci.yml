@@ -20,4 +20,6 @@ jobs:
       - run: |
           docker run -d -p 8000:8000 --name app agente-spam
           for i in $(seq 1 30); do curl -fs localhost:8000/health && break || sleep 1; done
+          curl -fs localhost:8000/metrics > /dev/null
+          curl -fs localhost:8000/prototipo > /dev/null
           curl -fs -X POST localhost:8000/predict -H 'content-type: application/json' -d '{"text":"You won a free prize, click now"}'

@@ -27,14 +27,25 @@ texto ──► limpieza ──► features (números) ──► clasificador �
 - Las palabras capturan el significado ("premio", "urgente", "verifique").
 - Los fragmentos de letras capturan variantes, faltas y mezclas de idioma ("gratiis", "v1agra") y ayudan algo con el español aunque el corpus base esté en inglés.
 
-## 3. Cómo "aprende por sí mismo"
+## 3. Cómo "aprende por sí mismo": el ciclo con humano en el circuito
 
-Hay **dos niveles**:
+**Qué tipo de aprendizaje es.** Supervisado, con *humano en el circuito* (human-in-the-loop) e incremental: las etiquetas las pone una persona que confirma lo que de verdad es cada mensaje. **No es aprendizaje por refuerzo clásico**, que aprende de recompensas tras tomar acciones y optimiza una política. Es la forma correcta de describirlo en el informe.
 
-1. **Inmediato (`POST /feedback`)**: tú dices "esto era spam" o "esto no era spam". El modelo hace una pasada de `partial_fit` con ese ejemplo **más una muestra equilibrada de 1.024 ejemplos viejos por clase** (repaso), y la corrección queda guardada en SQLite. El cambio es gradual y deliberadamente suave (ver "Lecciones" abajo).
-2. **Consolidado (`POST /retrain`)**: crea una copia del modelo (el *challenger*), la entrena con todas las correcciones acumuladas más una muestra de 3.000 ejemplos originales (para que no olvide lo anterior), y mide el F1 de ambos sobre un conjunto de control fijo de 2.000 correos. **Solo reemplaza al modelo actual si no empeora más de 0,003 de F1 ni pierde más de 3 puntos de recall en un set de estafas en español e inglés.** Así una mala racha de correcciones no estropea el modelo.
+```
+analizar ──► confirmar (persona) ──► guardar + ajuste suave ──► reentrenar y validar ──► adoptar o conservar
+                                                                                  └──► volver a la versión anterior
+```
 
-Qué **no** hace: no se entrena solo sin que nadie lo corrija. Aprende de las correcciones que recibe. Un agente que se auto-etiqueta sin supervisión tiende a reforzar sus propios errores.
+1. **Confirmar (`POST /feedback`).** Una persona dice «esto era estafa» o «esto no». Se guarda en SQLite junto con lo que el modelo había dicho (probabilidad y veredicto). Si se confirma de nuevo el mismo texto, **la etiqueta nueva reemplaza a la anterior**.
+2. **Ajuste provisional.** El modelo hace una pasada de `partial_fit` con ese ejemplo **más una muestra equilibrada de 1.024 ejemplos viejos por clase** (repaso), y se guarda el modelo en disco. Es deliberadamente suave: ver la sección 7.
+3. **Reentrenar y validar (`POST /retrain`).** Se construye un *challenger* **partiendo siempre del modelo base** (no del modelo en uso), con **todas** las confirmaciones vigentes (repetidas 5 veces para que no las ahogue el repaso) más una muestra de 3.000 ejemplos originales. Partir del base tiene una consecuencia importante: **una confirmación borrada o cambiada realmente desaparece del modelo**, cosa que no pasaría si se siguiera acumulando sobre el modelo en uso.
+4. **Adoptar solo si no empeora.** El candidato reemplaza al modelo en uso únicamente si (a) su F1 sobre 2.000 correos retenidos no baja más de 0,003 y (b) su detección de estafas en un conjunto de control en español e inglés no baja más de 3 puntos. Tolerar 0,003 significa que un reentrenamiento puede costar hasta ~0,3 puntos de F1 de control (lo vimos: 98,7 % → 98,4 %); es un precio aceptado a cambio de poder incorporar las confirmaciones.
+5. **Respaldo y deshacer.** Antes de reemplazar, el modelo anterior se guarda como `model.prev.joblib`. `POST /rollback` lo restaura. Todo queda registrado en `history.json`.
+6. **Persistencia.** El modelo en uso, la versión anterior, las confirmaciones y el historial viven en `DATA_DIR` y **se cargan solos al arrancar**. Las confirmaciones se pueden exportar e importar como JSON.
+
+**Qué mide el informe de reentrenamiento y qué no.** El acierto sobre las propias confirmaciones sube casi siempre, pero eso es memorizar lo que se acaba de enseñar. Lo que importa es que los controles (correos retenidos y estafas de control) no empeoren, y, para saber si el modelo mejora de verdad, medir con casos nuevos que **no** se usaron para enseñar (protocolo en [METODOLOGIA.md](METODOLOGIA.md), sección 6).
+
+**Qué no hace.** No se entrena solo sin que nadie confirme. Un sistema que se auto-etiqueta sin supervisión tiende a reforzar sus propios errores. Y tampoco hay cuentas de usuario: una clave de administrador protege las acciones que cambian el modelo.
 
 ## 4. Datos de español
 
@@ -101,9 +112,13 @@ requests.post("http://localhost:8000/feedback", json={"text": "...", "is_spam": 
 Un script que lea tus correos con la API de Gmail y llame a `/predict`. Recomiendo solo **etiquetar** ("posible-estafa" para `spam`, "revisar" para el término medio) en vez de mover o borrar, y alimentar `/feedback` cuando corrijas una etiqueta.
 
 ### Desplegar
-- **Render**: *New → Blueprint* y elige el repo (usa `render.yaml`). Define `RETRAIN_TOKEN` para habilitar `/retrain`.
-- **Docker**: `docker build -t agente-spam . && docker run -p 8000:8000 -v spamdata:/data agente-spam`. El volumen `spamdata` conserva lo aprendido entre reinicios.
-- Antes de exponerlo a internet agrega autenticación a `/predict` y `/feedback`: ahora mismo cualquiera podría enviar correcciones falsas y degradar el modelo.
+
+Ver [DESPLIEGUE.md](DESPLIEGUE.md) (opciones, costos, guías y seguridad).
+
+- **Servidor propio:** `docker compose --profile https up -d --build` (con tu `.env` y tu dominio; HTTPS automático con Caddy).
+- **Render:** *New → Blueprint* y elige el repo (`render.yaml`: plan Starter con disco persistente).
+- **Docker suelto:** `docker build -t agente-spam . && docker run -p 8000:8000 -v spamdata:/data -e RETRAIN_TOKEN=tu-clave -e FEEDBACK_REQUIRES_TOKEN=true agente-spam`. El volumen `spamdata` conserva lo aprendido entre reinicios.
+- **Antes de exponerlo** define `RETRAIN_TOKEN` y `FEEDBACK_REQUIRES_TOKEN=true`; sin ellas cualquiera podría enviar confirmaciones falsas y degradar el modelo. Necesita 512 MB de RAM y una sola instancia.
 
 ## 7. Lecciones medidas con correos reales
 

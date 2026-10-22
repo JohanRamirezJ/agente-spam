@@ -1,0 +1,39 @@
+# Fly.io:  fly launch --no-deploy --copy-config   (cambia "app" por un nombre único)
+#          fly volumes create spamdata --size 1 --region bog        (o la región más cercana)
+#          fly secrets set RETRAIN_TOKEN="$(python -c 'import secrets;print(secrets.token_urlsafe(32))')"
+#          fly deploy
+# Fly no tiene capa gratuita permanente para cuentas nuevas; verifica precios en fly.io/docs/about/pricing.
+app = "agente-spam-CAMBIAME"
+primary_region = "bog"
+
+[build]
+
+[env]
+  DATA_DIR = "/data"
+  PORT = "8000"
+  FEEDBACK_REQUIRES_TOKEN = "true"
+  TRUST_PROXY = "true"
+  RATE_LIMIT_PER_MIN = "120"
+
+[mounts]
+  source = "spamdata"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "off"      # con "stop" se duerme y arrancar de nuevo recarga el modelo (unos segundos)
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    timeout = "4s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  memory = "512mb"                # 256 MB NO alcanza (medido: 175 MB en reposo, ~370 MB al reentrenar)
+  cpu_kind = "shared"
+  cpus = 1

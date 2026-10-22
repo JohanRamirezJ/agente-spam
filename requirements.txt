@@ -1,4 +1,4 @@
-scikit-learn>=1.5
+scikit-learn==1.9.1  # the saved model was trained with this exact version; pickles are not guaranteed to load on others
 fastapi>=0.110
 uvicorn>=0.29
 pandas>=2.0

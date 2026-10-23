@@ -307,3 +307,27 @@ def test_public_hardening_rate_limit_body_size_and_feedback_token(tmp_path, monk
     assert c2.post("/feedback", json=body).status_code == 403
     assert c2.post("/feedback", json=body, headers={"X-Admin-Token": "secret"}).status_code == 200
     assert c2.post("/predict", json={"text": "hola"}).status_code == 200  # analysing stays public
+
+
+def test_pilot_data_is_original_and_balanced():
+    from spam_agent import pilot_mail
+    x, y = pilot_mail.train_examples()
+    assert len(x) == len(y) and set(y) == {0, 1}
+    assert not any("{" in t for t in x), "unfilled template placeholder"
+    # none of the hand-written evaluation sentences may leak into the pilot templates
+    evals = set(spanish_modern.EVAL_SPAM + spanish_modern.EVAL_HAM + legit_modern.EVAL_LEGIT + eval_final.SPAM + eval_final.LEGIT)
+    assert not (set(x) & evals)
+
+
+def test_no_private_mail_phrase_in_committed_code():
+    """Runs only on a machine that has the private mailbox (never in CI): no 8-word phrase may be shared."""
+    import importlib.util
+    import os
+    from pathlib import Path
+    pdir = Path(os.environ.get("PRIVATE_DATA_DIR", Path(__file__).resolve().parents[1] / "private"))
+    if not (pdir.exists() and (list(pdir.glob("*.jsonl")) or list(pdir.glob("legitimos_*.json")))):
+        pytest.skip("no private mail here")
+    spec = importlib.util.spec_from_file_location("check_leak", Path(__file__).resolve().parents[1] / "scripts" / "check_leak.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert mod.overlap(pdir) == 0

@@ -44,21 +44,21 @@ Sobre 3.562 correos de Enron + SMS que el modelo no vio (IC 95 % por bootstrap):
 
 | Precisión | Recall | F1 | Falsos positivos |
 |---|---|---|---|
-| 98,87 % [98,33; 99,35] | 97,63 % [96,82; 98,33] | 98,25 % [97,78; 98,69] | 0,83 % [0,48; 1,24] (17 de 2.042) |
+| 98,61 % [98,01; 99,16] | 98,22 % [97,54; 98,85] | 98,42 % [97,97; 98,83] | 1,03 % [0,63; 1,47] (21 de 2.042) |
 
-Por fuente: Enron F1 0.985 · SMS F1 0.922.
+Por fuente: Enron F1 0.986 · SMS F1 0.946.
 
 Con mensajes **escritos a mano** (muestras pequeñas: orientativo), en spam / revisar / ok:
 
 | Prueba | spam | revisar | ok |
 |---|---|---|---|
-| Test final: 25 estafas (ES+EN) | 6 | 16 | **3 se escapan** |
-| Test final: 25 correos legítimos | 0 | 4 | 21 |
-| Desarrollo: 30 estafas en español | 3 | 22 | 5 se escapan |
-| Desarrollo: 30 legítimos en español | 0 | 0 | 30 |
+| Test final: 25 estafas (ES+EN) | 21 | 2 | **2 se escapan** |
+| Test final: 25 correos legítimos | 1 | 3 | 21 |
+| Desarrollo: 30 estafas en español | 20 | 6 | 4 se escapan |
+| Desarrollo: 30 legítimos en español | 0 | 1 | 29 |
 | Desarrollo: 30 promos, códigos y recibos legítimos | 1 | 3 | 26 |
 
-Contra el primer prototipo (15 palabras fijas), sobre los mismos 50 mensajes del test final: el modelo acierta 43 (86 %) y el prototipo 32 (64 %); McNemar exacto p = 0,007. Ese p-valor vale **para estos mensajes**, escritos por el equipo; no prueba que gane en cualquier bandeja.
+Contra el primer prototipo (15 palabras fijas), sobre los mismos 50 mensajes del test final: el modelo acierta 44 (88 %) y el prototipo 32 (64 %); McNemar exacto p = 0,007. Ese p-valor vale **para estos mensajes**, escritos por el equipo; no prueba que gane en cualquier bandeja.
 
 **Cómo leerlo:** aproximadamente 1 de cada 8 estafas pasa como «ok», y alrededor de 1 de cada 6 correos legítimos (casi siempre promociones) cae en «revisar». Con correo real fue peor: de 35 promociones reales de una bandeja personal, 19 se marcaron como sospechosas. El modelo cuenta palabras; no entiende la intención.
 

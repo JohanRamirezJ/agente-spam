@@ -90,3 +90,15 @@ Para probar el modelo se leyeron, a través del conector de Gmail, los **asuntos
 ## 6. Alternativa no implementada
 
 La API de Gmail con OAuth permitiría bajar el correo sin Takeout, pero exige crear un proyecto en Google Cloud, una pantalla de consentimiento y guardar un `token.json`, lo que añade más secretos que proteger. Takeout es más simple y no requiere credenciales.
+
+## Del correo privado al modelo publicado (sin filtrar nada)
+
+Regla: **el texto real nunca entra al repositorio ni al modelo publicado; solo entran patrones reescritos.**
+
+1. Los datos reales (`private/*.jsonl`, `private/etiquetas3.json`, `private/legitimos_*.json`) se quedan en tu equipo (git los ignora).
+2. Solo se consideran publicables las familias de mensajes **masivos** (el mismo texto desde varios remitentes sin relación). Los correos transaccionales y personales (bancos, pagos, personas) nunca se publican.
+3. De esas familias se escribe una versión **nueva**, con otras palabras y datos inventados: `spam_agent/pilot_mail.py`.
+4. `python scripts/check_leak.py` compara frases de 8 palabras entre el correo privado y el código; imprime solo conteos y falla si hay coincidencias. En tu equipo, la prueba `test_no_private_mail_phrase_in_committed_code` lo ejecuta (en CI se omite porque allí no hay correo privado).
+5. Lo que los usuarios confirmen en el servidor desplegado queda en su base de datos (volumen), no en el repositorio.
+
+Límite que no se puede quitar: un modelo entrenado con datos privados puede, con un ataque dirigido, revelar algo sobre ellos. Por eso el modelo publicado solo aprende de datos sintéticos o masivos.

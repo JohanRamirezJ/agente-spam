@@ -54,10 +54,10 @@ Texto para el informe. Todas las cifras salen de `models/metrics.json` y `models
 
 | Métrica | Valor | IC 95 % (bootstrap) |
 |---|---|---|
-| Precisión | 98,87 % | [98,33; 99,35] |
-| Recall | 97,63 % | [96,82; 98,33] |
-| F1 | 98,25 % | [97,78; 98,69] |
-| Falsos positivos | 0,83 % (17 de 2.042 legítimos) | [0,48; 1,24] |
+| Precisión | 98,61 % | [98,01; 99,16] |
+| Recall | 98,22 % | [97,54; 98,85] |
+| F1 | 98,42 % | [97,97; 98,83] |
+| Falsos positivos | 1,03 % (21 de 2.042 legítimos) | [0,63; 1,47] |
 
 ### 4.2 Contraste de hipótesis: modelo entrenado vs. reglas fijas
 
@@ -65,8 +65,8 @@ Mismos mensajes escritos a mano, mismas decisiones (umbral 50 %). El clasificado
 
 | Conjunto | Modelo acierta | Reglas aciertan | Solo modelo | Solo reglas | McNemar exacto |
 |---|---|---|---|---|---|
-| Test final (50) | 43 (86 %) | 32 (64 %) | 13 | 2 | p = 0,0074 |
-| Todos los escritos a mano (140) | 124 (89 %) | 99 (71 %) | 33 | 8 | p = 0,0001 |
+| Test final (50) | 44 (88 %) | 32 (64 %) | 15 | 3 | p = 0,0075 |
+| Todos los escritos a mano (140) | 125 (89 %) | 99 (71 %) | 35 | 9 | p = 0,0001 |
 
 Se rechaza H₀ con α = 0,05 **sobre estos mensajes**. Ver las limitaciones de la sección 5 antes de generalizar.
 
@@ -74,8 +74,8 @@ Se rechaza H₀ con α = 0,05 **sobre estos mensajes**. Ver las limitaciones de 
 
 | | Estafa (≥ 80 %) | Revisar (50-80 %) | Ok (< 50 %) |
 |---|---|---|---|
-| 25 estafas | 6 | 16 | 3 se escapan (12 %, IC Wilson 4-30 %) |
-| 25 legítimos | 0 | 4 (16 %, IC Wilson 6-35 %) | 21 |
+| 25 estafas | 21 | 2 | 2 se escapan (8 %, IC Wilson 2-25 %) |
+| 25 legítimos | 1 | 3 (16 % marcados, IC Wilson 6-35 %) | 21 |
 
 ## 5. Limitaciones y amenazas a la validez
 
@@ -104,3 +104,14 @@ Para medirlo bien:
 7. **Reportar también si no mejora.** Con pocos casos el intervalo será ancho y la diferencia puede no ser concluyente; decirlo es parte del hallazgo.
 
 Amenazas a la validez propias de este diseño: las confirmaciones las hace el mismo equipo que evalúa; los casos provienen de una sola bandeja o fuente (sesgo de selección); y si alguien confirma por lo que el modelo dijo en vez de por lo que sabe, se refuerzan los errores (sesgo de confirmación). La etiqueta debe decidirse **antes** de mirar el veredicto del modelo.
+
+## 7. Piloto con correo real (octubre 2026)
+
+Muestra: 71 correos de la carpeta Spam de una cuenta nueva (4 phishing, 67 no deseados) y 22 correos legítimos tomados como fragmentos cortos de la bandeja de entrada. Etiquetas puestas a mano en tres clases (estafa / no deseado / legítimo); para el modelo binario, estafa y no deseado cuentan como spam.
+
+Con el modelo anterior: 63 de 71 marcados, solo 1 de las 4 estafas, 6 de 22 legítimos marcados por error.
+Con validación cruzada (mitades por familia de texto, 5 repeticiones), aprender de esos casos subió la detección de estafas de 25 % a 85 % sin aumentar los falsos positivos (30 → 29 de 110).
+
+Se incorporó al modelo base solo lo masivo, reescrito (`spam_agent/pilot_mail.py`). Resultado en pruebas públicas: F1 98,25 → 98,42 %; falsos positivos 0,83 → 1,03 %; test final 43 → 44 de 50; estafas del conjunto en español 25 → 26 de 30. En la muestra privada: 71 de 71 marcados, 4 de 4 estafas, 7 de 22 legítimos marcados (antes 6).
+
+Límites: las 4 estafas son un mismo mensaje; los legítimos son fragmentos, no correos completos; los ejemplos sintéticos están inspirados en esa misma muestra, así que la mejora allí está inflada. Con pocos ejemplos legítimos de alertas de seguridad se pierden estafas; por eso `n_legit` se dejó en 20.

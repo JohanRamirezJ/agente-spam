@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import ComplementNB
 from sklearn.svm import LinearSVC
 
-from . import data, legit_modern, modern_extra, spanish_modern, spanish_seed
+from . import data, legit_modern, modern_extra, pilot_mail, spanish_modern, spanish_seed
 from .features import vectorize
 from .model import SpamAgent, new_classifier
 
@@ -41,6 +41,9 @@ def main():
 
     ex, ey = modern_extra.train_examples()
     es = pd.concat([es, pd.DataFrame({"text": ex, "label": ey, "source": "modern_extra"})], ignore_index=True)
+
+    px, py = pilot_mail.train_examples()
+    es = pd.concat([es, pd.DataFrame({"text": px, "label": py, "source": "pilot_mail"})], ignore_index=True)
 
     train, rest = train_test_split(df, test_size=0.2, random_state=0, stratify=df.label)
     val, test = train_test_split(rest, test_size=0.5, random_state=0, stratify=rest.label)

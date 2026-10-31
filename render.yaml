@@ -1,0 +1,26 @@
+# Render Blueprint: New > Blueprint > elegir este repositorio.
+#
+# El plan gratuito de Render NO admite disco persistente y se duerme tras ~15 min sin tráfico, así que las
+# confirmaciones del equipo se perderían en cada reinicio. Por eso este archivo usa el plan de pago más barato
+# (Starter, 512 MB: el programa necesita ~370 MB de pico) con un disco de 1 GB. Verifica precios actuales en render.com/pricing.
+services:
+  - type: web
+    name: agente-spam
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    disk:
+      name: spamdata
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DATA_DIR
+        value: /data
+      - key: RETRAIN_TOKEN
+        generateValue: true       # cópiala desde el panel de Render: es tu clave de administrador
+      - key: FEEDBACK_REQUIRES_TOKEN
+        value: "true"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: RATE_LIMIT_PER_MIN
+        value: "120"

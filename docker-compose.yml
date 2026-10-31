@@ -1,0 +1,33 @@
+# Despliegue en un servidor propio (VPS) con almacenamiento persistente.
+#   docker compose up -d --build                    -> app en http://127.0.0.1:8000
+#   docker compose --profile https up -d --build    -> además Caddy con HTTPS automático (requiere DOMAIN apuntando al servidor)
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - spamdata:/data            # aquí viven el modelo en uso, las confirmaciones y el historial
+    ports:
+      - "127.0.0.1:8000:8000"     # solo local; el acceso público pasa por Caddy
+    restart: unless-stopped
+    mem_limit: 768m
+
+  caddy:
+    profiles: ["https"]
+    image: caddy:2
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  spamdata:
+  caddydata:

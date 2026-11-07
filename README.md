@@ -80,6 +80,18 @@ Dockerfile · docker-compose.yml · Caddyfile · render.yaml · fly.toml · .env
 
 Puedes enseñarle al modelo con tu propio correo **sin que salga de tu computador**: exportas con Google Takeout (incluye Spam), `scripts/import_mbox.py` lo limpia y oculta datos personales, y `scripts/review_private.py` te deja etiquetarlo en la terminal. Los correos viven en `private/` (ignorada por git); el `.env` solo guarda rutas y nombres a ocultar, **nunca** los correos. Guía: [docs/DATOS_PRIVADOS.md](docs/DATOS_PRIVADOS.md).
 
+## Arranque local con Docker
+
+```
+git clone https://github.com/JohanRamirezJ/agente-spam.git
+cd agente-spam
+docker compose up -d --build     # http://127.0.0.1:8000  (prototipo en /prototipo)
+docker compose logs -f app       # ver logs
+docker compose down              # detener (lo aprendido persiste en el volumen spamdata)
+```
+
+No hace falta `.env` para probar en local; si lo vas a exponer a internet, copia `.env.example` a `.env` y define `RETRAIN_TOKEN` (ver abajo).
+
 ## Despliegue y seguridad
 
 Hay archivos listos para servidor propio con HTTPS (`docker-compose.yml` + `Caddyfile`), Render y Fly.io. **Antes de exponerlo a internet** define `RETRAIN_TOKEN` y `FEEDBACK_REQUIRES_TOKEN=true`: sin ellas, cualquiera podría enseñarle confirmaciones falsas al modelo. Necesita **512 MB de RAM** (pico medido: 368 MB) y **una sola instancia**. Los planes gratuitos con disco efímero pierden lo aprendido al reiniciar. Opciones, costos, pasos y lo que no está verificado: [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).

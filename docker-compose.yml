@@ -1,10 +1,12 @@
 # Despliegue en un servidor propio (VPS) con almacenamiento persistente.
-#   docker compose up -d --build                    -> app en http://127.0.0.1:8000
+#   docker compose up -d --build                    -> app en http://127.0.0.1:8000 (funciona sin .env; para producción copia .env.example a .env)
 #   docker compose --profile https up -d --build    -> además Caddy con HTTPS automático (requiere DOMAIN apuntando al servidor)
 services:
   app:
     build: .
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false           # opcional en local; obligatorio en la práctica si lo expones a internet
     environment:
       DATA_DIR: /data
     volumes:
